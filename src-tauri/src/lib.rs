@@ -1,4 +1,5 @@
 pub mod state;
+pub mod terminal;
 
 #[cfg(feature = "tauri")]
 pub mod commands;
@@ -43,6 +44,7 @@ pub fn run() {
             commands::update_project,
             commands::delete_project,
             commands::record_session,
+            commands::open_kimi,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

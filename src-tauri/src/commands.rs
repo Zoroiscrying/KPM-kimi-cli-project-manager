@@ -78,3 +78,8 @@ pub fn record_session(
     state.save()?;
     get_state(state)
 }
+
+#[tauri::command]
+pub fn open_kimi(project_path: String) -> Result<(), String> {
+    crate::terminal::open_kimi_in_terminal(&project_path)
+}
