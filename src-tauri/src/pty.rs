@@ -50,20 +50,10 @@ impl PtyManager {
         let mut cmd = if cfg!(target_os = "windows") {
             let mut c = portable_pty::CommandBuilder::new("cmd.exe");
             c.arg("/k");
-            let inner = match kimi_session {
-                Some(id) => format!("cd /d \"{}\" && kimi -S {}", cwd, id),
-                None => format!("cd /d \"{}\" && kimi", cwd),
-            };
-            c.arg(inner);
             c
         } else {
             let mut c = portable_pty::CommandBuilder::new("bash");
-            c.arg("-lc");
-            let inner = match kimi_session {
-                Some(id) => format!("cd '{}' && kimi -S {}", cwd, id),
-                None => format!("cd '{}' && kimi", cwd),
-            };
-            c.arg(inner);
+            c.arg("-l");
             c
         };
         cmd.cwd(&cwd);
@@ -94,12 +84,20 @@ impl PtyManager {
         });
 
         self.sessions.lock().unwrap().insert(
-            session_id,
+            session_id.clone(),
             PtySession {
                 master,
                 writer: Arc::new(Mutex::new(writer)),
             },
         );
+
+        // Boot into Kimi CLI automatically. Use a short delay so the shell prompt is ready.
+        let boot_cmd = match kimi_session {
+            Some(id) => format!("kimi -S {}\r", id),
+            None => "kimi\r".to_string(),
+        };
+        thread::sleep(std::time::Duration::from_millis(300));
+        let _ = self.write(&session_id, &boot_cmd);
 
         Ok(())
     }
