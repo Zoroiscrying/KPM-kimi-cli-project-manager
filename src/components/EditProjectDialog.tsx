@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
 import type { Project } from '../types';
 
 interface EditProjectDialogProps {
@@ -39,6 +40,17 @@ export function EditProjectDialog({ project, isOpen, onClose, onSave }: EditProj
   }, [isOpen, onClose]);
 
   if (!isOpen || !project) return null;
+
+  const pickDirectory = async () => {
+    try {
+      const selected = await open({ directory: true });
+      if (typeof selected === 'string') {
+        setPath(selected);
+      }
+    } catch {
+      // User cancelled or dialog failed; ignore.
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,13 +98,22 @@ export function EditProjectDialog({ project, isOpen, onClose, onSave }: EditProj
             <label htmlFor="edit-project-path" className="mb-1 block text-sm text-neutral-400">
               Path
             </label>
-            <input
-              id="edit-project-path"
-              value={path}
-              onChange={(e) => setPath(e.target.value)}
-              className="w-full rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 outline-none focus:ring-2 focus:ring-blue-600"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                id="edit-project-path"
+                value={path}
+                onChange={(e) => setPath(e.target.value)}
+                className="flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 outline-none focus:ring-2 focus:ring-blue-600"
+                required
+              />
+              <button
+                type="button"
+                onClick={pickDirectory}
+                className="rounded-md bg-neutral-700 px-3 py-2 text-sm text-neutral-100 hover:bg-neutral-600"
+              >
+                Browse
+              </button>
+            </div>
           </div>
           <div>
             <label htmlFor="edit-project-description" className="mb-1 block text-sm text-neutral-400">

@@ -25,4 +25,9 @@ describe('EditProjectDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'web-app-v2' }));
   });
+
+  it('renders nothing when closed', () => {
+    const { container } = render(<EditProjectDialog project={project} isOpen={false} onClose={vi.fn()} onSave={vi.fn()} />);
+    expect(container.firstChild).toBeNull();
+  });
 });
