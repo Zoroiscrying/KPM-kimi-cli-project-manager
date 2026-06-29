@@ -33,7 +33,7 @@ export const useAppStore = create<AppStore>((set) => ({
       const state = await invoke<AppState>('get_state');
       set({ ...state, loaded: true, error: null });
     } catch (err) {
-      set({ loaded: false, error: toErrorMessage(err) });
+      set({ loaded: true, error: toErrorMessage(err) });
     }
   },
 

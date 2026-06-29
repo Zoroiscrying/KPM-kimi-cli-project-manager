@@ -5,7 +5,6 @@ import { EmptyState } from './components/EmptyState';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import { EditProjectDialog } from './components/EditProjectDialog';
 import { useAppStore } from './store/useAppStore';
-import type { Project } from './types';
 
 function App() {
   const {
@@ -22,16 +21,11 @@ function App() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     loadState();
   }, [loadState]);
-
-  useEffect(() => {
-    setEditingProject(projects.find((p) => p.id === selectedId) || null);
-  }, [selectedId, projects]);
 
   if (!loaded) {
     return (
@@ -50,17 +44,27 @@ function App() {
   }
 
   const selectedProject = projects.find((p) => p.id === selectedId) || null;
+  const editingProject = selectedProject;
+
+  const handleDelete = async (id: string) => {
+    await deleteProject(id);
+    if (selectedId === id) {
+      setSelectedId(null);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-neutral-950 text-neutral-100">
-      <div className="w-72 flex-shrink-0">
-        <ProjectList
-          projects={projects}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onDelete={deleteProject}
-        />
-        <div className="border-r border-neutral-800 bg-neutral-900 p-4">
+      <div className="flex w-72 flex-shrink-0 flex-col overflow-hidden border-r border-neutral-800 bg-neutral-900">
+        <div className="flex-1 overflow-hidden">
+          <ProjectList
+            projects={projects}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onDelete={handleDelete}
+          />
+        </div>
+        <div className="shrink-0 border-t border-neutral-800 p-4">
           <button
             onClick={() => setIsAddOpen(true)}
             className="w-full rounded-md bg-blue-700 py-2 text-sm font-medium text-white hover:bg-blue-600"
