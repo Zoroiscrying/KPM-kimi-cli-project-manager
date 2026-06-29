@@ -17,27 +17,38 @@ To build successfully, prepend the Strawberry Perl MinGW `windres` directory to 
 ```bash
 export PATH="/c/Strawberry/c/bin:$PATH"
 export PATH="/c/Users/zoroiscrying/.cargo/bin:$PATH"
-cargo build
+cargo build --features tauri
 ```
 
 ### Crate Type
 
 Because the MinGW linker fails with "export ordinal too large" when building Tauri v2 as `cdylib`/`staticlib`, `src-tauri/Cargo.toml` uses `crate-type = ["rlib"]`. This is sufficient for the desktop target because `main.rs` links the library directly. Mobile bundling is not supported in this configuration.
 
+### Tauri Feature Flag
+
+The `tauri` dependency is behind an optional Cargo feature so that `cargo test` can run on Windows without linking the Tauri runtime. The desktop binary requires the feature to be enabled.
+
+- `cargo test` — runs library and integration tests (Tauri disabled)
+- `cargo build --features tauri` — builds the desktop binary
+- `cargo run --features tauri` — runs the desktop app
+
 ### Useful Commands
 
 ```bash
-# Install dependencies and build
+# Install dependencies and build the Rust binary
 npm install
-cargo build
+cargo build --features tauri
 
 # Run dev server (requires correct PATH for windres)
-npm run tauri dev
+npm run tauri:dev
 
 # Run frontend tests
 npm test -- --run
 
+# Run Rust tests
+cargo test
+
 # Build production bundle
 npm run build
-cargo build --release
+npm run tauri:build
 ```
