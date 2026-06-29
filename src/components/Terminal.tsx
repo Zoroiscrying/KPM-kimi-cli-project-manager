@@ -18,7 +18,8 @@ export interface TerminalHandle {
 }
 
 interface TerminalProps {
-  project: Project | null;
+  project: Project;
+  isActive: boolean;
 }
 
 // Catppuccin Mocha-inspired palette for a modern terminal look
@@ -45,13 +46,14 @@ const TERMINAL_THEME = {
 };
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
-  ({ project }, ref) => {
+  ({ project, isActive }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
     const webglAddonRef = useRef<WebglAddon | null>(null);
     const sessionIdRef = useRef<string | null>(null);
-    const unlistenRef = useRef<UnlistenFn | null>(null);
+    const cleanupRef = useRef<(() => void) | null>(null);
+    const initializedRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
@@ -71,8 +73,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       },
     }));
 
+    // Initialize the terminal and PTY session the first time this tab becomes active.
+    // We intentionally do NOT return a cleanup here: the session must keep running
+    // when the tab becomes inactive so the user can switch back without losing state.
     useEffect(() => {
-      if (!containerRef.current) return;
+      if (!isActive || !containerRef.current || initializedRef.current) return;
+      initializedRef.current = true;
 
       const term = new XTerm({
         cursorBlink: true,
@@ -112,6 +118,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       });
 
       const handleResize = () => {
+        if (!isActive) return;
         fitAddon.fit();
         const sessionId = sessionIdRef.current;
         if (sessionId) {
@@ -124,122 +131,79 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       };
       window.addEventListener('resize', handleResize);
 
-      return () => {
+      let mounted = true;
+      let unlisten: UnlistenFn | null = null;
+
+      async function setupSession() {
+        const sessionId = `term-${project.id}`;
+        sessionIdRef.current = sessionId;
+
+        unlisten = await listen<{ data: string }>('terminal-output', (event) => {
+          if (!mounted) return;
+          if (event.payload.data && sessionIdRef.current === sessionId && terminalRef.current) {
+            terminalRef.current.write(event.payload.data);
+          }
+        });
+
+        try {
+          await invoke('start_terminal', { sessionId, cwd: project.path });
+        } catch (err) {
+          if (terminalRef.current) {
+            terminalRef.current.writeln(`\r\n[failed to start terminal: ${err}]`);
+          }
+        }
+      }
+      setupSession();
+
+      cleanupRef.current = () => {
+        mounted = false;
         window.removeEventListener('resize', handleResize);
         onDataDisposable.dispose();
+        unlisten?.();
+        if (sessionIdRef.current) {
+          invoke('stop_terminal', { sessionId: sessionIdRef.current }).catch(() => {});
+          sessionIdRef.current = null;
+        }
         webglAddonRef.current?.dispose();
         webglAddonRef.current = null;
         term.dispose();
         terminalRef.current = null;
         fitAddonRef.current = null;
       };
+    }, [isActive, project]);
+
+    // When the tab becomes active, refit and focus the terminal.
+    useEffect(() => {
+      if (!isActive) {
+        terminalRef.current?.blur();
+        return;
+      }
+      if (!terminalRef.current || !fitAddonRef.current) return;
+      requestAnimationFrame(() => {
+        fitAddonRef.current?.fit();
+        const rows = terminalRef.current?.rows;
+        const cols = terminalRef.current?.cols;
+        const sessionId = sessionIdRef.current;
+        if (rows && cols && sessionId) {
+          invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
+        }
+        terminalRef.current?.focus();
+      });
+    }, [isActive]);
+
+    // On unmount (tab closed), tear everything down.
+    useEffect(() => {
+      return () => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+      };
     }, []);
 
-    useEffect(() => {
-      let mounted = true;
-
-      async function setupSession() {
-        if (!terminalRef.current) return;
-
-        if (sessionIdRef.current) {
-          try {
-            await invoke('stop_terminal', { sessionId: sessionIdRef.current });
-          } catch {
-            // ignore
-          }
-          sessionIdRef.current = null;
-        }
-
-        if (unlistenRef.current) {
-          unlistenRef.current();
-          unlistenRef.current = null;
-        }
-
-        terminalRef.current.clear();
-
-        if (!project) {
-          terminalRef.current.writeln('Select a project to open an embedded terminal.');
-          return;
-        }
-
-        const sessionId = `term-${project.id}`;
-        sessionIdRef.current = sessionId;
-
-        const unlisten = await listen<{ data: string }>('terminal-output', (event) => {
-          if (!mounted) return;
-          if (event.payload.data && sessionIdRef.current === sessionId && terminalRef.current) {
-            terminalRef.current.write(event.payload.data);
-          }
-        });
-        unlistenRef.current = unlisten;
-
-        try {
-          await invoke('start_terminal', { sessionId, cwd: project.path });
-        } catch (err) {
-          terminalRef.current.writeln(`\r\n[failed to start terminal: ${err}]`);
-        }
-
-        if (fitAddonRef.current) {
-          fitAddonRef.current.fit();
-          const rows = terminalRef.current.rows;
-          const cols = terminalRef.current.cols;
-          if (rows && cols) {
-            invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
-          }
-        }
-      }
-
-      setupSession();
-
-      return () => {
-        mounted = false;
-        if (sessionIdRef.current) {
-          invoke('stop_terminal', { sessionId: sessionIdRef.current }).catch(() => {});
-          sessionIdRef.current = null;
-        }
-        if (unlistenRef.current) {
-          unlistenRef.current();
-          unlistenRef.current = null;
-        }
-      };
-    }, [project]);
-
     return (
-      <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-800 bg-[#0c0c0e] shadow-2xl">
-        {/* Tab bar / title bar */}
-        <div className="flex items-center gap-2 border-b border-neutral-800 bg-neutral-900/80 px-3 py-2 backdrop-blur">
-          <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-red-500/80" />
-            <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
-            <span className="h-3 w-3 rounded-full bg-green-500/80" />
-          </div>
-          <div className="ml-3 flex items-center gap-2 rounded-md bg-neutral-950 px-3 py-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-3.5 w-3.5 text-blue-400"
-            >
-              <path
-                fillRule="evenodd"
-                d="M2.232 12.207a.75.75 0 011.06.025l3.958 4.146V3.704a.75.75 0 011.5 0v12.674l3.958-4.146a.75.75 0 011.085 1.036l-5.25 5.5a.75.75 0 01-1.085 0l-5.25-5.5a.75.75 0 01.025-1.06z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="max-w-md truncate text-xs font-medium text-neutral-300">
-              {project ? project.name : 'No project selected'}
-            </span>
-          </div>
-          {project && (
-            <span className="ml-auto truncate text-xs text-neutral-500" title={project.path}>
-              {project.path}
-            </span>
-          )}
-        </div>
-
-        {/* Terminal surface */}
-        <div ref={containerRef} className="flex-1 overflow-hidden p-3" />
-      </div>
+      <div
+        ref={containerRef}
+        className={`h-full w-full ${isActive ? '' : 'invisible pointer-events-none'}`}
+      />
     );
   }
 );

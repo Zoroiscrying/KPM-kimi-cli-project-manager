@@ -196,6 +196,7 @@ function App() {
                     }
                   }}
                   project={tab.project}
+                  isActive={tab.id === activeTabId}
                 />
               </div>
             ))
