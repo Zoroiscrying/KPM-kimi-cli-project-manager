@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { ProjectList } from './components/ProjectList';
 import { Terminal, type TerminalHandle } from './components/Terminal';
 import { RightPanel } from './components/RightPanel';
@@ -123,6 +124,14 @@ function App() {
     handle?.focus();
   };
 
+  const handleRefresh = async () => {
+    try {
+      await invoke('refresh_window');
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0a0811] text-[#e8e2f0]">
       {/* Left sidebar */}
@@ -134,7 +143,7 @@ function App() {
         <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-white/5 px-3">
           {!leftCollapsed && (
             <span className="bg-gradient-to-r from-[#a855f7] to-[#6366f1] bg-clip-text text-sm font-bold text-transparent">
-              Kimi Desktop
+              Kimi CLI PM
             </span>
           )}
           <button
@@ -250,9 +259,11 @@ function App() {
             <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/5 bg-[#0d0a14] shadow-2xl">
               {tabs.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-[#7d7196]">
-                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#4f46e5] text-3xl text-white shadow-lg shadow-purple-900/30">
-                    K
-                  </div>
+                  <img
+                    src="/icon.svg"
+                    alt="Kimi CLI Project Manager"
+                    className="mb-4 h-16 w-16 rounded-2xl shadow-lg shadow-purple-900/30"
+                  />
                   <p className="text-sm">从左侧选择一个项目开始</p>
                 </div>
               ) : (
@@ -285,6 +296,13 @@ function App() {
                 onSubmit={handleCommandSubmit}
                 disabled={!activeProject}
                 placeholder={activeProject ? '输入命令发送到终端...' : '先选择一个项目'}
+                status={
+                  activeTabId
+                    ? isTabIdle(activeTabId)
+                      ? 'idle'
+                      : 'running'
+                    : 'none'
+                }
               />
             </div>
           </div>
@@ -330,6 +348,7 @@ function App() {
               onOpenKimi={() => activeProject && openKimi(activeProject)}
               onEdit={() => setIsEditOpen(true)}
               onCollapse={() => setRightCollapsed(true)}
+              onRefresh={handleRefresh}
             />
           </div>
         </div>

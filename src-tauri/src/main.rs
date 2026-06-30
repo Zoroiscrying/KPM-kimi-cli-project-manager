@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-  kimi_project_desktop::run();
+  kimi_cli_project_manager::run();
 }

@@ -1,134 +1,136 @@
-# Kimi Project Desktop
+# Kimi CLI Project Manager
 
-一个用于管理 [Kimi Code CLI](https://github.com/moonshotai/kimi-code) 项目的桌面应用。受 OpenAI Codex Desktop 启发，把项目列表、内嵌终端和会话管理整合到一个原生窗口里。
+[English](README.md) | [中文](README.zh.md)
 
-## 功能
+A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-code) projects. Inspired by OpenAI Codex Desktop, it brings project listing, embedded terminals, and session management into a single native window.
 
-- **项目管理**：添加、编辑、删除常用项目，支持从 Kimi CLI 历史自动导入。
-- **多标签页终端**：每个项目在独立的内嵌终端中运行 Kimi CLI，切换标签页不会中断会话。
-- **会话恢复**：打开项目时自动查找并恢复该项目的最近一次 Kimi 会话。
-- **命令输入栏**：底部输入命令直接发送到当前终端。
-- **最近会话**：右侧面板展示当前项目的会话历史。
-- **本地持久化**：项目列表和会话记录保存在本地 JSON 文件中。
+## Features
 
-## 界面布局
+- **Project management**: add, edit, and delete frequently used projects; import projects from Kimi CLI history.
+- **Multi-tab terminals**: each project runs Kimi CLI in its own embedded terminal; switching tabs keeps sessions alive.
+- **Session restore**: when opening a project, the app automatically resumes the most recent Kimi session for that project.
+- **Command input bar**: type commands at the bottom and send them directly to the active terminal.
+- **Recent sessions**: the right panel shows the session history for the current project.
+- **Local persistence**: project list and session records are stored in a local JSON file.
+
+## Layout
 
 ```
 ┌─────────────┬─────────────────────────────┬──────────────┐
-│  项目列表   │      终端标签页             │   项目信息   │
-│             │  ┌─────┬─────┬─────┐        │   最近会话   │
-│  + Add      │  │ A   │ B   │ C × │        │   工具       │
-│  Import     │  └─────┴─────┴─────┘        │              │
-│  from Kimi  │                             │              │
-│             │      内嵌 Kimi CLI          │              │
+│ Project     │      Terminal tabs          │  Project     │
+│ list        │  ┌─────┬─────┬─────┐        │  info        │
+│             │  │ A   │ B   │ C × │        │  Recents     │
+│  + Add      │  └─────┴─────┴─────┘        │  Tools       │
+│  Import     │                             │              │
+│  from Kimi  │      Embedded Kimi CLI      │              │
 │             │                             │              │
 │             │                             │              │
 ├─────────────┴─────────────────────────────┴──────────────┤
-│  输入命令...                                     [发送]   │
+│  Enter command...                                    Send │
 └──────────────────────────────────────────────────────────┘
 ```
 
-## 安装
+## Installation
 
-从 Release 页面下载对应平台的安装包：
+Download the installer for your platform from the [Releases](https://github.com/Zoroiscrying/kimi-cli-project-manager/releases) page:
 
-- Windows：`kimi-project-desktop_0.1.0_x64-setup.exe` 或 `.msi`
+- Windows: `kimi-cli-project-manager_0.1.0_x64-setup.exe` or `.msi`
 
-安装后运行 `Kimi Project Desktop`，首次启动会自动创建状态文件。
+After installation, run `Kimi CLI Project Manager`. The app will create the state file automatically on first launch.
 
-### 前提条件
+### Prerequisites
 
-- 已安装 [Kimi Code CLI](https://github.com/moonshotai/kimi-code) 并确保 `kimi` 命令在系统 PATH 中。
-- Windows 需要 WebView2 运行时（Windows 10/11 通常已内置）。
+- [Kimi Code CLI](https://github.com/moonshotai/kimi-code) installed and `kimi` available on your system PATH.
+- Windows: WebView2 runtime (usually pre-installed on Windows 10/11).
 
-## 使用说明
+## Usage
 
-1. 点击左侧 **+ Add Project** 添加项目目录。
-2. 或点击 **Import from Kimi** 自动导入 Kimi CLI 历史中使用过的项目。
-3. 点击项目打开一个终端标签页，应用会自动启动 `kimi` 并尝试恢复该项目的历史会话。
-4. 打开多个项目时，每个项目拥有独立的终端标签页，切换标签页不会关闭之前的 Kimi CLI。
-5. 在底部命令栏输入命令并发送，会直接写入当前终端。
-6. 关闭标签页才会真正结束该项目的 Kimi 进程。
+1. Click **+ Add Project** on the left to add a project directory.
+2. Or click **Import from Kimi** to import projects from your Kimi CLI history.
+3. Click a project to open a terminal tab; the app will start `kimi` and try to restore the latest session for that project.
+4. With multiple projects open, each one has its own terminal tab; switching tabs does not stop the previous Kimi CLI.
+5. Type commands in the bottom input bar and send them to the active terminal.
+6. Closing a tab is what actually terminates that project's Kimi process.
 
-## 开发
+## Development
 
-### 技术栈
+### Tech stack
 
-- 前端：React 18 + TypeScript + Tailwind CSS + Zustand
-- 后端：Rust + Tauri v2
-- 终端：xterm.js + WebGL Addon + portable-pty
+- Frontend: React 18 + TypeScript + Tailwind CSS + Zustand
+- Backend: Rust + Tauri v2
+- Terminal: xterm.js + Canvas Addon + portable-pty
 
-### 环境要求
+### Requirements
 
 - Rust toolchain
 - Node.js + npm
-- Windows GNU 构建还需要 Strawberry Perl 的 MinGW `windres`（见下方 PATH 说明）
+- Windows GNU builds also need Strawberry Perl's MinGW `windres` (see PATH note below)
 
-### 常用命令
+### Common commands
 
 ```bash
-# 安装依赖
+# Install dependencies
 npm install
 
-# 开发模式
+# Dev mode
 npm run tauri:dev
 
-# 前端测试
+# Frontend tests
 npm test -- --run
 
-# Rust 测试
+# Rust tests
 cd src-tauri && cargo test
 
-# 生产构建（Windows GNU 需要正确 PATH）
+# Production build (Windows GNU needs correct PATH)
 PATH="/c/Strawberry/c/bin:$HOME/.cargo/bin:$PATH" npm run tauri:build
 ```
 
-### Windows GNU 构建注意
+### Windows GNU build note
 
-如果你使用 `x86_64-pc-windows-gnu` 工具链，构建时可能会遇到：
+If you use the `x86_64-pc-windows-gnu` toolchain, you may see:
 
 ```text
 windres.exe: Can't detect target endianness and architecture.
 ```
 
-这是因为系统 PATH 中另一个 `windres` 被优先找到。构建前把 Strawberry Perl 的 MinGW bin 目录放到 PATH 最前面：
+This happens because another `windres` is found first in PATH. Prepend Strawberry Perl's MinGW bin directory before building:
 
 ```bash
 PATH="/c/Strawberry/c/bin:$HOME/.cargo/bin:$PATH" npm run tauri:build
 ```
 
-## 项目结构
+## Project structure
 
 ```
 .
-├── src/                          # React 前端
-│   ├── components/               # UI 组件
-│   ├── store/useAppStore.ts      # Zustand 状态管理
-│   └── types.ts                  # 共享类型
-├── src-tauri/                    # Rust + Tauri 后端
+├── src/                          # React frontend
+│   ├── components/               # UI components
+│   ├── store/useAppStore.ts      # Zustand state management
+│   └── types.ts                  # Shared types
+├── src-tauri/                    # Rust + Tauri backend
 │   ├── src/
-│   │   ├── commands.rs           # Tauri IPC 命令
-│   │   ├── pty.rs                # PTY / 内嵌终端
-│   │   ├── state.rs              # JSON 持久化
-│   │   └── kimi_import.rs        # Kimi CLI 历史解析
+│   │   ├── commands.rs           # Tauri IPC commands
+│   │   ├── pty.rs                # PTY / embedded terminal
+│   │   ├── state.rs              # JSON persistence
+│   │   └── kimi_import.rs        # Kimi CLI history parser
 │   └── Cargo.toml
-├── tests/                        # Vitest 组件测试
-└── docs/                         # 设计文档
+├── tests/                        # Vitest component tests
+└── docs/                         # Design documents
 ```
 
-## 数据存储
+## Data storage
 
-应用状态保存在：
+App state is persisted to:
 
-- Windows：`%APPDATA%/com.kimiproject.desktop/state.json`
-- macOS：`~/Library/Application Support/com.kimiproject.desktop/state.json`
-- Linux：`~/.local/share/com.kimiproject.desktop/state.json`
+- Windows: `%APPDATA%/com.kimicliprojectmanager.desktop/state.json`
+- macOS: `~/Library/Application Support/com.kimicliprojectmanager.desktop/state.json`
+- Linux: `~/.local/share/com.kimicliprojectmanager.desktop/state.json`
 
-## 已知限制
+## Known limitations
 
-- 当前仅支持 Windows 平台的主要测试和构建路径；macOS/Linux 的终端命令已做基本适配，但未经充分测试。
-- `kimi` CLI 必须在系统 PATH 中，否则内嵌终端会报错。
-- 同一个项目目前只能打开一个标签页。
+- Primary testing and build paths are Windows; macOS/Linux terminal commands are adapted but not fully tested.
+- `kimi` CLI must be on the system PATH, otherwise the embedded terminal will report an error.
+- The same project can only be opened in one tab at a time.
 
 ## License
 

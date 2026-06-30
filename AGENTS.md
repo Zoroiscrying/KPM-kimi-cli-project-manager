@@ -1,4 +1,4 @@
-# Agent Notes: Kimi Project Desktop
+# Agent Notes: Kimi CLI Project Manager
 
 ## Project Overview
 
@@ -66,9 +66,9 @@ After a successful `npm run tauri:build`, bundles appear in:
 
 App state is persisted to:
 
-- Windows: `%APPDATA%/com.kimiproject.desktop/state.json`
-- macOS: `~/Library/Application Support/com.kimiproject.desktop/state.json`
-- Linux: `~/.local/share/com.kimiproject.desktop/state.json`
+- Windows: `%APPDATA%/com.kimicliprojectmanager.desktop/state.json`
+- macOS: `~/Library/Application Support/com.kimicliprojectmanager.desktop/state.json`
+- Linux: `~/.local/share/com.kimicliprojectmanager.desktop/state.json`
 
 ## Known Quirks
 

@@ -4,12 +4,14 @@ interface CommandInputProps {
   onSubmit: (command: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  status?: 'none' | 'idle' | 'running';
 }
 
 export function CommandInput({
   onSubmit,
   disabled = false,
   placeholder = '输入命令发送到终端...',
+  status = 'none',
 }: CommandInputProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +34,23 @@ export function CommandInput({
       onSubmit={handleSubmit}
       className="flex h-full items-center gap-2 border-t border-white/5 bg-[#0f0c17] px-4 py-2"
     >
+      {status !== 'none' && (
+        <div
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium ${
+            status === 'running'
+              ? 'border-[#7c3aed]/30 bg-[#7c3aed]/10 text-[#d8b4fe]'
+              : 'border-green-500/20 bg-green-500/10 text-green-300'
+          }`}
+          title={status === 'running' ? 'Kimi CLI 正在输出' : 'Kimi CLI 空闲'}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              status === 'running' ? 'animate-pulse bg-[#c084fc]' : 'bg-green-400'
+            }`}
+          />
+          {status === 'running' ? '运行中' : '空闲'}
+        </div>
+      )}
       <div className="flex h-10 flex-1 items-center rounded-full border border-white/10 bg-[#151222] px-4 focus-within:border-[#7c3aed] focus-within:ring-1 focus-within:ring-[#7c3aed]/50">
         <input
           ref={inputRef}

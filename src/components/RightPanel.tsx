@@ -7,6 +7,7 @@ interface RightPanelProps {
   onOpenKimi?: () => void;
   onEdit?: () => void;
   onCollapse?: () => void;
+  onRefresh?: () => void;
 }
 
 export function RightPanel({
@@ -16,6 +17,7 @@ export function RightPanel({
   onOpenKimi,
   onEdit,
   onCollapse,
+  onRefresh,
 }: RightPanelProps) {
   const projectSessions = project
     ? sessions.filter((s) => s.projectId === project.id).slice(-10).reverse()
@@ -155,6 +157,12 @@ export function RightPanel({
                   className="w-full rounded-xl border border-white/5 bg-[#151222] px-3 py-2 text-left text-xs text-[#b6aacf] hover:bg-[#1c1830]"
                 >
                   复制项目路径
+                </button>
+                <button
+                  onClick={onRefresh}
+                  className="w-full rounded-xl border border-white/5 bg-[#151222] px-3 py-2 text-left text-xs text-[#b6aacf] hover:bg-[#1c1830]"
+                >
+                  刷新窗口渲染
                 </button>
               </div>
             </section>

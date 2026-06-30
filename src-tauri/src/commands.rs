@@ -131,6 +131,28 @@ pub fn stop_terminal(
     state.stop(&session_id)
 }
 
+#[tauri::command]
+pub fn refresh_window(app_handle: AppHandle) -> Result<(), String> {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        window
+            .eval(
+                r#"
+                (function () {
+                    const body = document.body;
+                    void body.offsetHeight;
+                    body.style.transform = 'translateZ(0)';
+                    requestAnimationFrame(function () {
+                        body.style.transform = '';
+                    });
+                    window.dispatchEvent(new Event('resize'));
+                })();
+                "#,
+            )
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[derive(Clone, serde::Serialize)]
 struct TerminalOutputEvent {
     session_id: String,

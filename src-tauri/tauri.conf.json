@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "kimi-project-desktop",
+  "productName": "kimi-cli-project-manager",
   "version": "0.1.0",
-  "identifier": "com.kimiproject.desktop",
+  "identifier": "com.kimicliprojectmanager.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Kimi Project Desktop",
+        "title": "Kimi CLI Project Manager",
         "width": 800,
         "height": 600,
         "resizable": true,
