@@ -1,13 +1,13 @@
 [package]
-name = "kimi-project-desktop"
+name = "kimi-cli-project-manager"
 version = "0.1.0"
-description = "Kimi Project Desktop - multi-project manager for Kimi Code CLI"
-authors = ["kimi-project-desktop"]
+description = "Kimi CLI Project Manager - multi-project manager for Kimi Code CLI"
+authors = ["kimi-cli-project-manager"]
 edition = "2021"
 rust-version = "1.77.2"
 
 [lib]
-name = "kimi_project_desktop"
+name = "kimi_cli_project_manager"
 # Use rlib only because the MinGW linker on this Windows GNU toolchain fails
 # with "export ordinal too large" when building cdylib/staticlib for Tauri v2.
 # This is sufficient for the desktop target since main.rs links the rlib directly.
@@ -18,7 +18,7 @@ default = []
 tauri = ["dep:tauri", "dep:tauri-build", "dep:tauri-plugin-shell", "dep:tauri-plugin-dialog", "dep:chrono", "dep:uuid", "dep:portable-pty"]
 
 [[bin]]
-name = "kimi-project-desktop"
+name = "kimi-cli-project-manager"
 path = "src/main.rs"
 required-features = ["tauri"]
 

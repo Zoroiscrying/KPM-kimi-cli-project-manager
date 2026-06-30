@@ -6,6 +6,7 @@ import {
 } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { CanvasAddon } from '@xterm/addon-canvas';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import '@xterm/xterm/css/xterm.css';
@@ -85,12 +86,13 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         fontFamily: '"JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace',
         fontWeight: 400,
         fontWeightBold: 700,
-        lineHeight: 1.2,
+        lineHeight: 1.0,
         theme: TERMINAL_THEME,
         scrollback: 10000,
       });
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
+      term.loadAddon(new CanvasAddon());
 
       term.open(containerRef.current);
       fitAddon.fit();
@@ -110,6 +112,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       const handleResize = () => {
         if (!isActive) return;
         fitAddon.fit();
+        term.scrollToBottom();
         const sessionId = sessionIdRef.current;
         if (sessionId) {
           const rows = term.rows;
@@ -137,8 +140,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               event.payload.data &&
               terminalRef.current
             ) {
-              terminalRef.current.write(event.payload.data);
+              const term = terminalRef.current;
+              const wasAtBottom =
+                term.buffer.active.viewportY === term.buffer.active.baseY;
+              term.write(event.payload.data);
               onOutput?.();
+              if (wasAtBottom) {
+                term.scrollToBottom();
+              }
             }
           }
         );
@@ -183,6 +192,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         if (rows && cols && sessionId) {
           invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
         }
+        terminalRef.current?.scrollToBottom();
         terminalRef.current?.focus();
       });
     }, [isActive]);
