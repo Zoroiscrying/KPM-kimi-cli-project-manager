@@ -30,9 +30,9 @@ export function CommandInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-full items-center gap-2 border-t border-neutral-800 bg-neutral-900 px-4 py-2"
+      className="flex h-full items-center gap-2 border-t border-white/5 bg-[#0f0c17] px-4 py-2"
     >
-      <div className="flex h-9 flex-1 items-center rounded-full border border-neutral-700 bg-neutral-950 px-3 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600">
+      <div className="flex h-10 flex-1 items-center rounded-full border border-white/10 bg-[#151222] px-4 focus-within:border-[#7c3aed] focus-within:ring-1 focus-within:ring-[#7c3aed]/50">
         <input
           ref={inputRef}
           type="text"
@@ -40,13 +40,13 @@ export function CommandInput({
           onChange={(e) => setValue(e.target.value)}
           disabled={disabled}
           placeholder={disabled ? '先选择一个项目' : placeholder}
-          className="h-full w-full bg-transparent text-sm text-neutral-100 placeholder-neutral-500 outline-none disabled:text-neutral-600"
+          className="h-full w-full bg-transparent text-sm text-[#e8e2f0] placeholder-[#7d7196] outline-none disabled:text-[#5e5670]"
         />
       </div>
       <button
         type="submit"
         disabled={disabled || !value.trim()}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-400"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] text-white shadow-lg shadow-purple-900/20 hover:from-[#6d28d9] hover:to-[#4338ca] disabled:cursor-not-allowed disabled:from-[#2d264d] disabled:to-[#2d264d] disabled:text-[#7d7196]"
         aria-label="发送命令"
       >
         <svg

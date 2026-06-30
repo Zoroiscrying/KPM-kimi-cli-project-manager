@@ -22,26 +22,26 @@ interface TerminalProps {
   isActive: boolean;
 }
 
-// Catppuccin Mocha-inspired palette for a modern terminal look
+// Kimi-inspired purple/blue terminal palette
 const TERMINAL_THEME = {
-  background: '#0c0c0e',
-  foreground: '#cdd6f4',
-  cursor: '#f5e0dc',
-  black: '#11111b',
-  brightBlack: '#585b70',
-  red: '#f38ba8',
-  brightRed: '#f38ba8',
-  green: '#a6e3a1',
-  brightGreen: '#a6e3a1',
-  yellow: '#f9e2af',
-  brightYellow: '#f9e2af',
-  blue: '#89b4fa',
-  brightBlue: '#89b4fa',
-  magenta: '#cba6f7',
-  brightMagenta: '#cba6f7',
-  cyan: '#94e2d5',
-  brightCyan: '#94e2d5',
-  white: '#cdd6f4',
+  background: '#0d0a14',
+  foreground: '#e8e2f0',
+  cursor: '#c4b5fd',
+  black: '#151222',
+  brightBlack: '#4a4460',
+  red: '#f87171',
+  brightRed: '#fca5a5',
+  green: '#34d399',
+  brightGreen: '#6ee7b7',
+  yellow: '#fbbf24',
+  brightYellow: '#fcd34d',
+  blue: '#818cf8',
+  brightBlue: '#a5b4fc',
+  magenta: '#c084fc',
+  brightMagenta: '#d8b4fe',
+  cyan: '#22d3ee',
+  brightCyan: '#67e8f9',
+  white: '#e8e2f0',
   brightWhite: '#ffffff',
 };
 
