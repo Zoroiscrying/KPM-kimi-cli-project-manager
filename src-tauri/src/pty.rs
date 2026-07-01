@@ -50,6 +50,9 @@ impl PtyManager {
 
         let mut cmd = portable_pty::CommandBuilder::new("kimi");
         cmd.cwd(&cwd);
+        cmd.env("TERM", "xterm-256color");
+        cmd.env("COLORTERM", "truecolor");
+        cmd.env("FORCE_COLOR", "1");
         if let Some(id) = kimi_session.as_ref() {
             cmd.arg("-S");
             cmd.arg(id);
