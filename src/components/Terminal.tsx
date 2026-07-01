@@ -26,6 +26,18 @@ interface TerminalProps {
   onSessionStatusChange?: (status: SessionStatus) => void;
 }
 
+const ANSI_ESCAPE_RE = /\x1b\[[0-9;]*[a-zA-Z]/g;
+
+function stripAnsi(text: string): string {
+  return text.replace(ANSI_ESCAPE_RE, '');
+}
+
+function looksLikePrompt(tail: string): boolean {
+  const plain = stripAnsi(tail);
+  // Match a line that is just ">" or "> " at the very end of output.
+  return /[\r\n]>\s*$/.test(plain);
+}
+
 // Kimi-inspired purple/blue terminal palette
 const TERMINAL_THEME = {
   background: '#0d0a14',
@@ -58,6 +70,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const initializedRef = useRef(false);
     const hasInputRef = useRef(false);
     const outputTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const outputTailRef = useRef('');
 
     const clearOutputTimer = () => {
       if (outputTimerRef.current) {
@@ -78,6 +91,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         const term = terminalRef.current;
         if (!term || !command) return;
         hasInputRef.current = true;
+        outputTailRef.current = '';
         onSessionStatusChange?.('running');
         startOutputTimer();
         term.write(command);
@@ -122,6 +136,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       const onDataDisposable = term.onData((data) => {
         hasInputRef.current = true;
+        outputTailRef.current = '';
         onSessionStatusChange?.('running');
         startOutputTimer();
         invoke('write_terminal', { sessionId, data }).catch((err) => {
@@ -162,8 +177,17 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
                 term.scrollToBottom();
               }
               if (hasInputRef.current) {
-                onSessionStatusChange?.('running');
-                startOutputTimer();
+                outputTailRef.current += event.payload.data;
+                if (outputTailRef.current.length > 256) {
+                  outputTailRef.current = outputTailRef.current.slice(-256);
+                }
+                if (looksLikePrompt(outputTailRef.current)) {
+                  clearOutputTimer();
+                  onSessionStatusChange?.('completed');
+                } else {
+                  onSessionStatusChange?.('running');
+                  startOutputTimer();
+                }
               }
             }
           }
