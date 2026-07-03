@@ -51,3 +51,12 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+});

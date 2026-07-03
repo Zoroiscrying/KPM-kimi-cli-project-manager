@@ -127,18 +127,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         });
       });
 
-      const handleResize = () => {
-        if (!isActive) return;
-        fitAddon.fit();
-        term.scrollToBottom();
-        const rows = term.rows;
-        const cols = term.cols;
-        if (rows && cols) {
-          invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
-        }
-      };
-      window.addEventListener('resize', handleResize);
-
       let mounted = true;
       let unlisten: UnlistenFn | null = null;
 
@@ -188,7 +176,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       cleanupRef.current = () => {
         mounted = false;
-        window.removeEventListener('resize', handleResize);
         onDataDisposable.dispose();
         unlisten?.();
         invoke('stop_terminal', { sessionId }).catch(() => {});
@@ -198,24 +185,46 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       };
     }, [isActive, project, onSessionStart, onSessionStatusChange]);
 
-    // When the tab becomes active, refit and focus the terminal.
+    // Fit on actual container size changes; scroll/focus when becoming active.
     useEffect(() => {
-      if (!isActive) {
+      if (!isActive || !containerRef.current || !terminalRef.current || !fitAddonRef.current) {
         terminalRef.current?.blur();
         return;
       }
-      if (!terminalRef.current || !fitAddonRef.current) return;
+
+      const container = containerRef.current;
+      let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const fitAndResize = () => {
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          if (!fitAddonRef.current || !terminalRef.current) return;
+          fitAddonRef.current.fit();
+          const rows = terminalRef.current.rows;
+          const cols = terminalRef.current.cols;
+          if (rows && cols) {
+            invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
+          }
+          terminalRef.current.scrollToBottom();
+        }, 100);
+      };
+
+      const ro = new ResizeObserver(fitAndResize);
+      ro.observe(container);
+      fitAndResize();
+
       requestAnimationFrame(() => {
-        fitAddonRef.current?.fit();
-        const rows = terminalRef.current?.rows;
-        const cols = terminalRef.current?.cols;
-        if (rows && cols) {
-          invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
-        }
-        terminalRef.current?.refresh(0, (terminalRef.current?.rows ?? 1) - 1);
         terminalRef.current?.scrollToBottom();
-        terminalRef.current?.focus();
+        requestAnimationFrame(() => {
+          terminalRef.current?.scrollToBottom();
+          terminalRef.current?.focus();
+        });
       });
+
+      return () => {
+        ro.disconnect();
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+      };
     }, [isActive, sessionId]);
 
     // On unmount (tab closed), tear everything down.
