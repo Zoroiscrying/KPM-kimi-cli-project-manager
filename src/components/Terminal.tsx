@@ -104,7 +104,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         fontFamily: '"JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace',
         fontWeight: 400,
         fontWeightBold: 700,
-        lineHeight: 1.0,
+        lineHeight: 1.2,
         theme: TERMINAL_THEME,
         scrollback: 10000,
       });
@@ -145,7 +145,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
                 term.buffer.active.viewportY === term.buffer.active.baseY;
               term.write(event.payload.data);
               if (wasAtBottom) {
-                term.scrollToBottom();
+                requestAnimationFrame(() => {
+                  terminalRef.current?.scrollToBottom();
+                });
               }
               if (hasInputRef.current) {
                 outputTailRef.current += event.payload.data;
@@ -198,28 +200,37 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       const fitAndResize = () => {
         if (resizeTimeout) clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-          if (!fitAddonRef.current || !terminalRef.current) return;
+          if (!fitAddonRef.current || !terminalRef.current || !containerRef.current) return;
+          const { clientWidth, clientHeight } = containerRef.current;
+          if (clientWidth === 0 || clientHeight === 0) return;
           fitAddonRef.current.fit();
           const rows = terminalRef.current.rows;
           const cols = terminalRef.current.cols;
           if (rows && cols) {
             invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
           }
-          terminalRef.current.scrollToBottom();
+          requestAnimationFrame(() => {
+            terminalRef.current?.scrollToBottom();
+          });
         }, 100);
       };
 
       const ro = new ResizeObserver(fitAndResize);
       ro.observe(container);
-      fitAndResize();
 
-      requestAnimationFrame(() => {
-        terminalRef.current?.scrollToBottom();
-        requestAnimationFrame(() => {
+      // Aggressively scroll to bottom when the tab becomes visible; xterm's
+      // canvas renderer sometimes resets the viewport while hidden or during
+      // the first paint after visibility changes.
+      const scrollLater = (delay: number) => {
+        setTimeout(() => {
           terminalRef.current?.scrollToBottom();
-          terminalRef.current?.focus();
-        });
-      });
+        }, delay);
+      };
+      scrollLater(0);
+      scrollLater(50);
+      scrollLater(150);
+      scrollLater(300);
+      terminalRef.current?.focus();
 
       return () => {
         ro.disconnect();
