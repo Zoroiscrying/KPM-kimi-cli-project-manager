@@ -70,6 +70,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const initializedRef = useRef(false);
     const hasInputRef = useRef(false);
     const outputTailRef = useRef('');
+    const userScrolledUpRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
@@ -127,6 +128,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         });
       });
 
+      const onScrollDisposable = term.onScroll(() => {
+        if (!terminalRef.current) return;
+        const atBottom =
+          terminalRef.current.buffer.active.viewportY ===
+          terminalRef.current.buffer.active.baseY;
+        userScrolledUpRef.current = !atBottom;
+      });
+
       let mounted = true;
       let unlisten: UnlistenFn | null = null;
 
@@ -141,10 +150,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               terminalRef.current
             ) {
               const term = terminalRef.current;
-              const wasAtBottom =
-                term.buffer.active.viewportY === term.buffer.active.baseY;
+              const wasScrolledUp = userScrolledUpRef.current;
               term.write(event.payload.data);
-              if (wasAtBottom) {
+              if (!wasScrolledUp) {
                 requestAnimationFrame(() => {
                   terminalRef.current?.scrollToBottom();
                 });
@@ -179,6 +187,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       cleanupRef.current = () => {
         mounted = false;
         onDataDisposable.dispose();
+        onScrollDisposable.dispose();
         unlisten?.();
         invoke('stop_terminal', { sessionId }).catch(() => {});
         term.dispose();

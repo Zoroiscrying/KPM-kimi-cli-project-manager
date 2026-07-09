@@ -20,6 +20,9 @@ vi.mock('@xterm/xterm', () => ({
     onResize(_handler: (data: { cols: number; rows: number }) => void) {
       return { dispose: () => {} };
     }
+    onScroll(_handler: () => void) {
+      return { dispose: () => {} };
+    }
     get rows() {
       return 24;
     }
