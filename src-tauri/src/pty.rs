@@ -1,4 +1,4 @@
-use portable_pty::{Child, MasterPty, NativePtySystem, PtySize, PtySystem};
+use portable_pty::{Child, ChildKiller, MasterPty, NativePtySystem, PtySize, PtySystem};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -9,6 +9,7 @@ pub struct PtySession {
     master: Box<dyn MasterPty + Send>,
     writer: Arc<Mutex<Box<dyn Write + Send>>>,
     child: Arc<Mutex<Box<dyn Child + Send>>>,
+    killer: Arc<Mutex<Box<dyn ChildKiller + Send + Sync>>>,
 }
 
 pub struct PtyManager {
@@ -41,12 +42,11 @@ impl PtyManager {
             })
             .map_err(|e| e.to_string())?;
 
-        let kimi_session = home_dir()
-            .and_then(|home| {
-                let index_path = home.join(".kimi-code").join("session_index.jsonl");
-                let content = std::fs::read_to_string(&index_path).ok()?;
-                crate::kimi_import::find_latest_kimi_session(&content, &cwd)
-            });
+        let kimi_session = home_dir().and_then(|home| {
+            let index_path = home.join(".kimi-code").join("session_index.jsonl");
+            let content = std::fs::read_to_string(&index_path).ok()?;
+            crate::kimi_import::find_latest_kimi_session(&content, &cwd)
+        });
 
         let mut cmd = portable_pty::CommandBuilder::new("kimi");
         cmd.cwd(&cwd);
@@ -58,7 +58,9 @@ impl PtyManager {
             cmd.arg(id);
         }
 
-        let child: Box<dyn Child + Send> = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
+        let child: Box<dyn Child + Send> =
+            pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
+        let killer = child.clone_killer();
         let master = pair.master;
         let writer = master.take_writer().map_err(|e| e.to_string())?;
         drop(pair.slave);
@@ -66,6 +68,10 @@ impl PtyManager {
         let mut reader = master.try_clone_reader().map_err(|e| e.to_string())?;
         let sessions = self.sessions.clone();
         let session_id_for_thread = session_id.clone();
+
+        let child_arc = Arc::new(Mutex::new(child));
+        let child_for_thread = child_arc.clone();
+        let writer_arc = Arc::new(Mutex::new(writer));
 
         thread::spawn(move || {
             let mut buf = [0u8; 1024];
@@ -79,6 +85,11 @@ impl PtyManager {
                     Err(_) => break,
                 }
             }
+            // Do not remove the session just because the reader returned an
+            // error; on Windows the PTY pipe can spuriously fail while the
+            // child process is still alive. Wait for the actual process exit
+            // before cleaning up the map so that writes/resizes keep working.
+            let _ = child_for_thread.lock().unwrap().wait();
             sessions.lock().unwrap().remove(&session_id_for_thread);
         });
 
@@ -86,8 +97,9 @@ impl PtyManager {
             session_id.clone(),
             PtySession {
                 master,
-                writer: Arc::new(Mutex::new(writer)),
-                child: Arc::new(Mutex::new(child)),
+                writer: writer_arc,
+                child: child_arc,
+                killer: Arc::new(Mutex::new(killer)),
             },
         );
 
@@ -126,20 +138,26 @@ impl PtyManager {
     pub fn stop(&self, session_id: &str) -> Result<(), String> {
         let mut sessions = self.sessions.lock().map_err(|e| e.to_string())?;
         if let Some(session) = sessions.remove(session_id) {
-            let mut child = session.child.lock().map_err(|e| e.to_string())?;
-            let _ = child.kill();
+            let mut killer = session.killer.lock().map_err(|e| e.to_string())?;
+            let _ = killer.kill();
         }
         Ok(())
     }
 
     pub fn is_running(&self, session_id: &str) -> Result<bool, String> {
         let mut sessions = self.sessions.lock().map_err(|e| e.to_string())?;
-        let Some(session) = sessions.get_mut(session_id) else {
-            return Ok(false);
-        };
-        let running = {
+        let running = if let Some(session) = sessions.get(session_id) {
             let mut child = session.child.lock().map_err(|e| e.to_string())?;
-            matches!(child.try_wait(), Ok(None))
+            match child.try_wait() {
+                Ok(None) => true,
+                Ok(Some(_)) => false,
+                // If we cannot determine the state, do NOT remove the session;
+                // the reader thread will clean it up once the process really
+                // exits. Report it as not-running so the UI does not get stuck.
+                Err(_) => false,
+            }
+        } else {
+            false
         };
         if !running {
             sessions.remove(session_id);
