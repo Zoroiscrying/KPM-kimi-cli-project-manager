@@ -15,8 +15,6 @@
 
 [English](README.md) | [中文](README.zh.md) | [官网](https://zoroiscrying.github.io/KPM-kimi-cli-project-manager/)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R4Y123EUQF) · [☕ 爱发电](https://ifdian.net/a/zorogames)
-
 一个用于管理 [Kimi Code CLI](https://github.com/moonshotai/kimi-code) 项目的桌面应用。受 OpenAI Codex Desktop 启发，把项目列表、内嵌终端和会话管理整合到一个原生窗口里。
 
 > **声明**：KPM 是社区自发的非官方项目，与 Moonshot AI（月之暗面）无任何隶属、背书或赞助关系。「Kimi」「Kimi Code」为 Moonshot AI 的商标。

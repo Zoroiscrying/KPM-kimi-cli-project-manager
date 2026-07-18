@@ -15,8 +15,6 @@
 
 [English](README.md) | [中文](README.zh.md) | [Website](https://zoroiscrying.github.io/KPM-kimi-cli-project-manager/)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R4Y123EUQF)
-
 A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-code) projects. Inspired by OpenAI Codex Desktop, it brings project listing, embedded terminals, and session management into a single native window.
 
 > **Disclaimer**: KPM is a community-built, unofficial project. It is not affiliated with, endorsed by, or sponsored by Moonshot AI. "Kimi" and "Kimi Code" are trademarks of Moonshot AI.
