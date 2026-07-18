@@ -53,6 +53,10 @@ impl PtyManager {
         cmd.env("TERM", "xterm-256color");
         cmd.env("COLORTERM", "truecolor");
         cmd.env("FORCE_COLOR", "1");
+        // Make Kimi think it runs inside Windows Terminal so it emits OSC 9;4
+        // progress sequences ("\x1b]9;4;3" busy / "\x1b]9;4;0" done) that we use
+        // as the authoritative running/completed signal.
+        cmd.env("WT_SESSION", "kpm");
         if let Some(id) = kimi_session.as_ref() {
             cmd.arg("-S");
             cmd.arg(id);

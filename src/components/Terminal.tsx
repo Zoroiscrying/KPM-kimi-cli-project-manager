@@ -83,6 +83,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const userScrolledUpRef = useRef(false);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastEvalRef = useRef(0);
+    const progressSignalRef = useRef(false);
+    const oscTailRef = useRef('');
 
     // Completion detection, three layered signals:
     // 1. term.onBell — Kimi emits a terminal bell (BEL) / OSC 9 on turn-complete.
@@ -208,13 +210,31 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
             ) {
               const term = terminalRef.current;
               const wasScrolledUp = userScrolledUpRef.current;
-              term.write(event.payload.data);
+              const data = event.payload.data;
+              term.write(data);
               if (!wasScrolledUp) {
                 requestAnimationFrame(() => {
                   terminalRef.current?.scrollToBottom();
                 });
               }
-              if (hasInputRef.current) {
+              // Authoritative signal: Kimi emits OSC 9;4;3 when work starts
+              // (and every second as keepalive) and OSC 9;4;0 when it clears.
+              // Keep a small tail so sequences split across chunks still match.
+              const oscHay = oscTailRef.current + data;
+              let handled = false;
+              if (oscHay.includes('\x1b]9;4;3')) {
+                progressSignalRef.current = true;
+                onSessionStatusChange?.('running');
+                handled = true;
+              } else if (oscHay.includes('\x1b]9;4;0')) {
+                progressSignalRef.current = true;
+                onSessionStatusChange?.('completed');
+                handled = true;
+              }
+              oscTailRef.current = oscHay.slice(-16);
+              // Screen-content heuristics only run until the authoritative
+              // progress signal shows up (older Kimi builds may not emit it).
+              if (!handled && !progressSignalRef.current && hasInputRef.current) {
                 scheduleStatusCheck();
                 const now = Date.now();
                 if (now - lastEvalRef.current > 500) {
