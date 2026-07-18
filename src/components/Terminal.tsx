@@ -11,6 +11,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import '@xterm/xterm/css/xterm.css';
 import type { Project } from '../types';
+import type { SessionStatus } from './StatusDot';
 
 export interface TerminalHandle {
   sendCommand: (command: string) => void;
@@ -19,47 +20,65 @@ export interface TerminalHandle {
 
 interface TerminalProps {
   project: Project;
+  sessionId: string;
   isActive: boolean;
-  onOutput?: () => void;
+  onSessionStart?: () => void;
+  onSessionStatusChange?: (status: SessionStatus) => void;
+}
+
+const ANSI_ESCAPE_RE = /\x1b\[[0-9;]*[a-zA-Z]/g;
+
+function stripAnsi(text: string): string {
+  return text.replace(ANSI_ESCAPE_RE, '');
+}
+
+function looksLikePrompt(tail: string): boolean {
+  const plain = stripAnsi(tail);
+  // Match a line that is just ">" or "> " at the very end of output.
+  return /[\r\n]>\s*$/.test(plain);
 }
 
 // Kimi-inspired purple/blue terminal palette
 const TERMINAL_THEME = {
-  background: '#0d0a14',
-  foreground: '#e8e2f0',
-  cursor: '#c4b5fd',
-  black: '#151222',
-  brightBlack: '#4a4460',
+  background: '#121212',
+  foreground: '#ffffffd6',
+  cursor: '#ffffff',
+  black: '#292929',
+  brightBlack: '#4d4d4d',
   red: '#f87171',
   brightRed: '#fca5a5',
   green: '#34d399',
   brightGreen: '#6ee7b7',
   yellow: '#fbbf24',
   brightYellow: '#fcd34d',
-  blue: '#818cf8',
-  brightBlue: '#a5b4fc',
-  magenta: '#c084fc',
-  brightMagenta: '#d8b4fe',
+  blue: '#258eff',
+  brightBlue: '#5cadff',
+  magenta: '#a16bff',
+  brightMagenta: '#c9aaff',
   cyan: '#22d3ee',
   brightCyan: '#67e8f9',
-  white: '#e8e2f0',
+  white: '#ffffffd6',
   brightWhite: '#ffffff',
 };
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
-  ({ project, isActive, onOutput }, ref) => {
+  ({ project, sessionId, isActive, onSessionStart, onSessionStatusChange }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
-    const sessionIdRef = useRef<string | null>(null);
     const cleanupRef = useRef<(() => void) | null>(null);
     const initializedRef = useRef(false);
+    const hasInputRef = useRef(false);
+    const outputTailRef = useRef('');
+    const userScrolledUpRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
-        const sessionId = sessionIdRef.current;
         const term = terminalRef.current;
-        if (!sessionId || !term) return;
+        if (!term || !command) return;
+        hasInputRef.current = true;
+        outputTailRef.current = '';
+        onSessionStatusChange?.('running');
         term.write(command);
         term.write('\r');
         invoke('write_terminal', { sessionId, data: command + '\r' }).catch(
@@ -86,7 +105,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         fontFamily: '"JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace',
         fontWeight: 400,
         fontWeightBold: 700,
-        lineHeight: 1.0,
+        lineHeight: 1.2,
         theme: TERMINAL_THEME,
         scrollback: 10000,
       });
@@ -101,36 +120,26 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       fitAddonRef.current = fitAddon;
 
       const onDataDisposable = term.onData((data) => {
-        const sessionId = sessionIdRef.current;
-        if (sessionId) {
-          invoke('write_terminal', { sessionId, data }).catch((err) => {
-            term.writeln(`\r\n[write error: ${err}]`);
-          });
-        }
+        hasInputRef.current = true;
+        outputTailRef.current = '';
+        onSessionStatusChange?.('running');
+        invoke('write_terminal', { sessionId, data }).catch((err) => {
+          term.writeln(`\r\n[write error: ${err}]`);
+        });
       });
 
-      const handleResize = () => {
-        if (!isActive) return;
-        fitAddon.fit();
-        term.scrollToBottom();
-        const sessionId = sessionIdRef.current;
-        if (sessionId) {
-          const rows = term.rows;
-          const cols = term.cols;
-          if (rows && cols) {
-            invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
-          }
-        }
-      };
-      window.addEventListener('resize', handleResize);
+      const onScrollDisposable = term.onScroll(() => {
+        if (!terminalRef.current) return;
+        const atBottom =
+          terminalRef.current.buffer.active.viewportY ===
+          terminalRef.current.buffer.active.baseY;
+        userScrolledUpRef.current = !atBottom;
+      });
 
       let mounted = true;
       let unlisten: UnlistenFn | null = null;
 
       async function setupSession() {
-        const sessionId = `term-${project.id}`;
-        sessionIdRef.current = sessionId;
-
         unlisten = await listen<{ session_id: string; data: string }>(
           'terminal-output',
           (event) => {
@@ -141,12 +150,23 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               terminalRef.current
             ) {
               const term = terminalRef.current;
-              const wasAtBottom =
-                term.buffer.active.viewportY === term.buffer.active.baseY;
+              const wasScrolledUp = userScrolledUpRef.current;
               term.write(event.payload.data);
-              onOutput?.();
-              if (wasAtBottom) {
-                term.scrollToBottom();
+              if (!wasScrolledUp) {
+                requestAnimationFrame(() => {
+                  terminalRef.current?.scrollToBottom();
+                });
+              }
+              if (hasInputRef.current) {
+                outputTailRef.current += event.payload.data;
+                if (outputTailRef.current.length > 256) {
+                  outputTailRef.current = outputTailRef.current.slice(-256);
+                }
+                if (looksLikePrompt(outputTailRef.current)) {
+                  onSessionStatusChange?.('completed');
+                } else {
+                  onSessionStatusChange?.('running');
+                }
               }
             }
           }
@@ -154,7 +174,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
         try {
           await invoke('start_terminal', { sessionId, cwd: project.path });
+          onSessionStart?.();
         } catch (err) {
+          onSessionStatusChange?.('completed');
           if (terminalRef.current) {
             terminalRef.current.writeln(`\r\n[failed to start terminal: ${err}]`);
           }
@@ -164,38 +186,66 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       cleanupRef.current = () => {
         mounted = false;
-        window.removeEventListener('resize', handleResize);
         onDataDisposable.dispose();
+        onScrollDisposable.dispose();
         unlisten?.();
-        if (sessionIdRef.current) {
-          invoke('stop_terminal', { sessionId: sessionIdRef.current }).catch(() => {});
-          sessionIdRef.current = null;
-        }
+        invoke('stop_terminal', { sessionId }).catch(() => {});
         term.dispose();
         terminalRef.current = null;
         fitAddonRef.current = null;
       };
-    }, [isActive, project, onOutput]);
+    }, [isActive, project, onSessionStart, onSessionStatusChange]);
 
-    // When the tab becomes active, refit and focus the terminal.
+    // Fit on actual container size changes; scroll/focus when becoming active.
     useEffect(() => {
-      if (!isActive) {
+      if (!isActive || !containerRef.current || !terminalRef.current || !fitAddonRef.current) {
         terminalRef.current?.blur();
         return;
       }
-      if (!terminalRef.current || !fitAddonRef.current) return;
-      requestAnimationFrame(() => {
-        fitAddonRef.current?.fit();
-        const rows = terminalRef.current?.rows;
-        const cols = terminalRef.current?.cols;
-        const sessionId = sessionIdRef.current;
-        if (rows && cols && sessionId) {
-          invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
-        }
-        terminalRef.current?.scrollToBottom();
-        terminalRef.current?.focus();
-      });
-    }, [isActive]);
+
+      const container = containerRef.current;
+      let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const fitAndResize = () => {
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          if (!fitAddonRef.current || !terminalRef.current || !containerRef.current) return;
+          const { clientWidth, clientHeight } = containerRef.current;
+          if (clientWidth === 0 || clientHeight === 0) return;
+          fitAddonRef.current.fit();
+          const rows = terminalRef.current.rows;
+          const cols = terminalRef.current.cols;
+          if (rows && cols) {
+            invoke('resize_terminal', { sessionId, rows, cols }).catch(() => {});
+          }
+          requestAnimationFrame(() => {
+            terminalRef.current?.scrollToBottom();
+          });
+        }, 100);
+      };
+
+      const ro = new ResizeObserver(fitAndResize);
+      ro.observe(container);
+
+      // Aggressively scroll to bottom when the tab becomes visible; xterm's
+      // canvas renderer sometimes resets the viewport while hidden or during
+      // the first paint after visibility changes.
+      const scrollLater = (delay: number) => {
+        setTimeout(() => {
+          terminalRef.current?.scrollToBottom();
+        }, delay);
+      };
+      scrollLater(0);
+      scrollLater(50);
+      scrollLater(150);
+      scrollLater(300);
+      terminalRef.current?.focus();
+
+      return () => {
+        ro.disconnect();
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+      };
+    }, [isActive, sessionId]);
 
     // On unmount (tab closed), tear everything down.
     useEffect(() => {
@@ -208,7 +258,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     return (
       <div
         ref={containerRef}
-        className={`h-full w-full ${isActive ? '' : 'hidden'}`}
+        className="h-full w-full"
       />
     );
   }

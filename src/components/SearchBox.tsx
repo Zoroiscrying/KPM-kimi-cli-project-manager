@@ -12,7 +12,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search projects...' 
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       aria-label={placeholder}
-      className="w-full rounded-xl border border-white/10 bg-[#151222] px-3 py-2 text-sm text-[#e8e2f0] placeholder-[#7d7196] outline-none focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed]/50"
+      className="w-full rounded-xl border border-white/10 bg-[#1e1e1e] px-3 py-2 text-sm text-[#ffffff] placeholder-[#ffffff66] outline-none focus:border-[#1783ff] focus:ring-1 focus:ring-[#1783ff]/50"
     />
   );
 }

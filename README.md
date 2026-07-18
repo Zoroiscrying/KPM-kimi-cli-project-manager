@@ -1,4 +1,17 @@
-# Kimi CLI Project Manager
+<p align="center">
+  <img src="docs/images/icon.png" alt="Kimi CLI Project Manager icon" width="96" />
+</p>
+
+<h1 align="center">Kimi CLI Project Manager</h1>
+
+<p align="center">
+  A desktop home for your Kimi Code CLI projects — multi-tab embedded terminals, session restore,<br/>
+  and a workspace that keeps every project one click away.
+</p>
+
+<p align="center">
+  <img src="docs/images/app-screenshot.png" alt="Kimi CLI Project Manager screenshot" />
+</p>
 
 [English](README.md) | [中文](README.zh.md)
 
@@ -9,8 +22,7 @@ A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-co
 - **Project management**: add, edit, and delete frequently used projects; import projects from Kimi CLI history.
 - **Multi-tab terminals**: each project runs Kimi CLI in its own embedded terminal; switching tabs keeps sessions alive.
 - **Session restore**: when opening a project, the app automatically resumes the most recent Kimi session for that project.
-- **Command input bar**: type commands at the bottom and send them directly to the active terminal.
-- **Recent sessions**: the right panel shows the session history for the current project.
+- **Environment panel**: project details, recent sessions, and handy tools (open folder, copy path) on the right.
 - **Local persistence**: project list and session records are stored in a local JSON file.
 
 ## Layout
@@ -24,10 +36,7 @@ A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-co
 │  Import     │                             │              │
 │  from Kimi  │      Embedded Kimi CLI      │              │
 │             │                             │              │
-│             │                             │              │
-├─────────────┴─────────────────────────────┴──────────────┤
-│  Enter command...                                    Send │
-└──────────────────────────────────────────────────────────┘
+└─────────────┴─────────────────────────────┴──────────────┘
 ```
 
 ## Installation
@@ -49,7 +58,7 @@ After installation, run `Kimi CLI Project Manager`. The app will create the stat
 2. Or click **Import from Kimi** to import projects from your Kimi CLI history.
 3. Click a project to open a terminal tab; the app will start `kimi` and try to restore the latest session for that project.
 4. With multiple projects open, each one has its own terminal tab; switching tabs does not stop the previous Kimi CLI.
-5. Type commands in the bottom input bar and send them to the active terminal.
+5. Type directly in the terminal — every keystroke goes straight to the embedded Kimi CLI.
 6. Closing a tab is what actually terminates that project's Kimi process.
 
 ## Development

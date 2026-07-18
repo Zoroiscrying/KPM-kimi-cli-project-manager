@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "kimi-cli-project-manager",
-  "version": "0.1.0",
+  "version": "0.2.4",
   "identifier": "com.kimicliprojectmanager.desktop",
   "build": {
     "frontendDist": "../dist",

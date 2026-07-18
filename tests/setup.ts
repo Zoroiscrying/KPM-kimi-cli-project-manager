@@ -11,7 +11,16 @@ vi.mock('@xterm/xterm', () => ({
     writeln() {}
     clear() {}
     dispose() {}
+    focus() {}
+    scrollToBottom() {}
+    refresh() {}
     onData(_handler: (data: string) => void) {
+      return { dispose: () => {} };
+    }
+    onResize(_handler: (data: { cols: number; rows: number }) => void) {
+      return { dispose: () => {} };
+    }
+    onScroll(_handler: () => void) {
       return { dispose: () => {} };
     }
     get rows() {
@@ -44,4 +53,13 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+});
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
 });

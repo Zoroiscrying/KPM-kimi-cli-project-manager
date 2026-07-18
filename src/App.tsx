@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ProjectList } from './components/ProjectList';
-import { Terminal, type TerminalHandle } from './components/Terminal';
+import { Terminal } from './components/Terminal';
 import { RightPanel } from './components/RightPanel';
-import { CommandInput } from './components/CommandInput';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import { EditProjectDialog } from './components/EditProjectDialog';
 import { Toast } from './components/Toast';
+import { StatusDot, type SessionStatus } from './components/StatusDot';
 import { useAppStore } from './store/useAppStore';
 import type { Project } from './types';
 
@@ -37,26 +37,60 @@ function App() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [lastActivityAt, setLastActivityAt] = useState<Record<string, number>>({});
-  const terminalRefs = useRef<Map<string, TerminalHandle>>(new Map());
+  const [sessionStatuses, setSessionStatuses] = useState<Record<string, SessionStatus>>({});
+  const startedTabsRef = useRef<Set<string>>(new Set());
 
-  const markActive = (tabId: string) => {
-    setLastActivityAt((prev) => ({ ...prev, [tabId]: Date.now() }));
+  const setTabStatus = (tabId: string, status: SessionStatus) => {
+    setSessionStatuses((prev) => ({ ...prev, [tabId]: status }));
   };
 
-  const isTabIdle = (tabId: string) => {
-    const last = lastActivityAt[tabId];
-    if (!last) return true;
-    return Date.now() - last > 3000;
+  const removeTabStatus = (tabId: string) => {
+    setSessionStatuses((prev) => {
+      const next = { ...prev };
+      delete next[tabId];
+      return next;
+    });
+    startedTabsRef.current.delete(tabId);
+  };
+
+  const getProjectStatus = (projectId: string): SessionStatus => {
+    const projectTabs = tabs.filter((t) => t.project.id === projectId);
+    if (projectTabs.length === 0) return 'not-started';
+    if (projectTabs.some((t) => sessionStatuses[t.id] === 'running')) return 'running';
+    if (projectTabs.some((t) => sessionStatuses[t.id] === 'completed')) return 'completed';
+    return 'not-started';
   };
 
   useEffect(() => {
     loadState();
   }, [loadState]);
 
+  // Poll real process liveness for running tabs.
+  useEffect(() => {
+    if (tabs.length === 0) return;
+
+    const interval = setInterval(() => {
+      for (const tab of tabs) {
+        if (!startedTabsRef.current.has(tab.id)) continue;
+        const sessionId = sessionIdForTab(tab);
+        import('@tauri-apps/api/core')
+          .then(({ invoke }) => invoke<boolean>('is_terminal_running', { sessionId }))
+          .then((running) => {
+            if (!running) {
+              setTabStatus(tab.id, 'completed');
+              startedTabsRef.current.delete(tab.id);
+            }
+          })
+          .catch(() => {});
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [tabs, sessionStatuses]);
+
   if (!loaded) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0a0811] text-[#a89bc4]">
+      <div className="flex h-screen items-center justify-center bg-[#0d0d0d] text-[#ffffff99]">
         Loading...
       </div>
     );
@@ -80,14 +114,17 @@ function App() {
     const newTab: Tab = { id: `tab-${id}-${Date.now()}`, project };
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(newTab.id);
+    setTabStatus(newTab.id, 'not-started');
   };
+
+  const sessionIdForTab = (tab: Tab) => `term-${tab.id}`;
 
   const handleCloseTab = async (tabId: string) => {
     const tab = tabs.find((t) => t.id === tabId);
     if (tab) {
       try {
         await import('@tauri-apps/api/core').then(({ invoke }) =>
-          invoke('stop_terminal', { sessionId: `term-${tab.project.id}` })
+          invoke('stop_terminal', { sessionId: sessionIdForTab(tab) })
         );
       } catch {
         // ignore
@@ -103,6 +140,7 @@ function App() {
       }
       return next;
     });
+    removeTabStatus(tabId);
   };
 
   const handleDeleteProject = async (id: string) => {
@@ -116,14 +154,6 @@ function App() {
     }
   };
 
-  const handleCommandSubmit = (command: string) => {
-    if (!activeTabId) return;
-    markActive(activeTabId);
-    const handle = terminalRefs.current.get(activeTabId);
-    handle?.sendCommand(command);
-    handle?.focus();
-  };
-
   const handleRefresh = async () => {
     try {
       await invoke('refresh_window');
@@ -133,22 +163,20 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0a0811] text-[#e8e2f0]">
+    <div className="flex h-screen overflow-hidden bg-[#0d0d0d] text-[#ffffff]">
       {/* Left sidebar */}
       <div
-        className={`flex flex-shrink-0 flex-col overflow-hidden border-r border-white/5 bg-[#0f0c17] transition-all duration-300 ease-out ${
+        className={`flex flex-shrink-0 flex-col overflow-hidden border-r border-white/5 bg-[#161616] transition-all duration-300 ease-out ${
           leftCollapsed ? 'w-14' : 'w-60'
         }`}
       >
         <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-white/5 px-3">
           {!leftCollapsed && (
-            <span className="bg-gradient-to-r from-[#a855f7] to-[#6366f1] bg-clip-text text-sm font-bold text-transparent">
-              Kimi CLI PM
-            </span>
+            <span className="text-sm font-bold text-white">Kimi CLI PM</span>
           )}
           <button
             onClick={() => setLeftCollapsed((v) => !v)}
-            className="rounded-md p-1.5 text-[#a89bc4] hover:bg-white/5 hover:text-white"
+            className="rounded-md p-1.5 text-[#ffffff99] hover:bg-white/5 hover:text-white"
             aria-label={leftCollapsed ? '展开左侧面板' : '收起左侧面板'}
           >
             <svg
@@ -173,6 +201,7 @@ function App() {
             onSelect={handleSelectProject}
             onDelete={handleDeleteProject}
             collapsed={leftCollapsed}
+            getStatus={getProjectStatus}
           />
         </div>
 
@@ -180,14 +209,15 @@ function App() {
           <div className="shrink-0 space-y-2 border-t border-white/5 p-3">
             <button
               onClick={() => setIsAddOpen(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/20 hover:from-[#6d28d9] hover:to-[#4338ca]"
+              aria-label="Add Project"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#1783ff] to-[#258eff] py-2 text-sm font-medium text-white shadow-lg shadow-black/20 hover:from-[#258eff] hover:to-[#1a88ff]"
             >
               <span>+</span>
               <span>Add Project</span>
             </button>
             <button
               onClick={() => importKimiProjects()}
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-sm font-medium text-[#d4c8e8] hover:bg-white/10"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-sm font-medium text-[#ffffff] hover:bg-white/10"
             >
               Import from Kimi
             </button>
@@ -198,14 +228,14 @@ function App() {
           <div className="flex shrink-0 flex-col items-center gap-2 border-t border-white/5 py-3">
             <button
               onClick={() => setIsAddOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] text-white shadow-lg shadow-purple-900/20"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[#1783ff] to-[#258eff] text-white shadow-lg shadow-black/20"
               aria-label="Add Project"
             >
               +
             </button>
             <button
               onClick={() => importKimiProjects()}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#d4c8e8] hover:bg-white/10"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#ffffff] hover:bg-white/10"
               aria-label="Import from Kimi"
             >
               ↓
@@ -218,17 +248,18 @@ function App() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Tab bar */}
         {tabs.length > 0 && (
-          <div className="flex h-11 flex-shrink-0 items-center gap-1 border-b border-white/5 bg-[#0a0811] px-3">
+          <div className="flex h-11 flex-shrink-0 items-center gap-1 border-b border-white/5 bg-[#0d0d0d] px-3">
             {tabs.map((tab) => (
               <div
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
                 className={`group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   tab.id === activeTabId
-                    ? 'bg-white/10 text-white shadow-sm'
-                    : 'text-[#9c8fb8] hover:bg-white/5 hover:text-[#d4c8e8]'
+                    ? 'bg-[#1783ff]/15 text-[#5cadff]'
+                    : 'text-[#ffffff99] hover:bg-white/5 hover:text-[#ffffff]'
                 }`}
               >
+                <StatusDot status={sessionStatuses[tab.id] ?? 'not-started'} size="sm" />
                 <span className="max-w-[140px] truncate">{tab.project.name}</span>
                 <button
                   onClick={(e) => {
@@ -256,13 +287,13 @@ function App() {
         <div className="relative flex flex-1 flex-row overflow-hidden">
           {/* Center terminal */}
           <div className="flex flex-1 flex-col overflow-hidden p-3">
-            <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/5 bg-[#0d0a14] shadow-2xl">
+            <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/10 bg-[#121212] shadow-2xl shadow-black/10">
               {tabs.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-[#7d7196]">
+                <div className="flex h-full flex-col items-center justify-center text-[#ffffff66]">
                   <img
                     src="/icon.svg"
                     alt="Kimi CLI Project Manager"
-                    className="mb-4 h-16 w-16 rounded-2xl shadow-lg shadow-purple-900/30"
+                    className="mb-4 h-16 w-16 rounded-2xl shadow-lg shadow-black/30"
                   />
                   <p className="text-sm">从左侧选择一个项目开始</p>
                 </div>
@@ -271,46 +302,28 @@ function App() {
                   <div
                     key={tab.id}
                     className={`absolute inset-0 ${
-                      tab.id === activeTabId ? 'block' : 'hidden'
+                      tab.id === activeTabId ? 'visible z-10' : 'invisible z-0'
                     }`}
                   >
                     <Terminal
-                      ref={(el) => {
-                        if (el) {
-                          terminalRefs.current.set(tab.id, el);
-                        } else {
-                          terminalRefs.current.delete(tab.id);
-                        }
-                      }}
                       project={tab.project}
+                      sessionId={sessionIdForTab(tab)}
                       isActive={tab.id === activeTabId}
-                      onOutput={() => markActive(tab.id)}
+                      onSessionStart={() => {
+                        startedTabsRef.current.add(tab.id);
+                      }}
+                      onSessionStatusChange={(status) => setTabStatus(tab.id, status)}
                     />
                   </div>
                 ))
               )}
-            </div>
-
-            <div className="mt-3 h-14 shrink-0">
-              <CommandInput
-                onSubmit={handleCommandSubmit}
-                disabled={!activeProject}
-                placeholder={activeProject ? '输入命令发送到终端...' : '先选择一个项目'}
-                status={
-                  activeTabId
-                    ? isTabIdle(activeTabId)
-                      ? 'idle'
-                      : 'running'
-                    : 'none'
-                }
-              />
             </div>
           </div>
 
           {/* Right sidebar toggle button */}
           <button
             onClick={() => setRightCollapsed((v) => !v)}
-            className={`absolute right-3 top-3 z-20 rounded-lg border border-white/10 bg-[#151222] p-1.5 text-[#a89bc4] shadow-lg hover:bg-[#1c1830] hover:text-white ${
+            className={`absolute right-3 top-3 z-20 rounded-lg border border-white/10 bg-[#1e1e1e] p-1.5 text-[#ffffff99] shadow-lg hover:bg-[#262626] hover:text-white ${
               rightCollapsed ? 'opacity-100' : 'opacity-0 hover:opacity-100'
             } transition-opacity`}
             aria-label={rightCollapsed ? '展开右侧面板' : '收起右侧面板'}
@@ -331,20 +344,14 @@ function App() {
 
           {/* Right sidebar */}
           <div
-            className={`flex-shrink-0 overflow-hidden border-l border-white/5 bg-[#0f0c17] transition-all duration-300 ease-out ${
+            className={`flex-shrink-0 overflow-hidden border-l border-white/5 bg-[#161616] transition-all duration-300 ease-out ${
               rightCollapsed ? 'w-0 opacity-0' : 'w-72 opacity-100'
             }`}
           >
             <RightPanel
               project={activeProject}
               sessions={sessions}
-              status={
-                activeTabId
-                  ? isTabIdle(activeTabId)
-                    ? 'idle'
-                    : 'running'
-                  : 'none'
-              }
+              status={activeTabId ? sessionStatuses[activeTabId] ?? 'not-started' : 'none'}
               onOpenKimi={() => activeProject && openKimi(activeProject)}
               onEdit={() => setIsEditOpen(true)}
               onCollapse={() => setRightCollapsed(true)}

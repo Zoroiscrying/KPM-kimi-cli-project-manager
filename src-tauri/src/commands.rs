@@ -132,6 +132,14 @@ pub fn stop_terminal(
 }
 
 #[tauri::command]
+pub fn is_terminal_running(
+    state: State<'_, crate::pty::PtyManager>,
+    session_id: String,
+) -> Result<bool, String> {
+    state.is_running(&session_id)
+}
+
+#[tauri::command]
 pub fn refresh_window(app_handle: AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
         window

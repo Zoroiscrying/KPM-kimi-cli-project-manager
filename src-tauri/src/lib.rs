@@ -1,6 +1,6 @@
+pub mod kimi_import;
 pub mod state;
 mod terminal;
-pub mod kimi_import;
 
 #[cfg(feature = "tauri")]
 pub mod commands;
@@ -12,20 +12,9 @@ use commands::AppStateWrapper;
 #[cfg(feature = "tauri")]
 use state::load_or_create;
 #[cfg(feature = "tauri")]
-use std::path::PathBuf;
-#[cfg(feature = "tauri")]
 use std::sync::Mutex;
 #[cfg(feature = "tauri")]
 use tauri::Manager;
-
-#[cfg(feature = "tauri")]
-pub fn app_state_path(app_handle: &tauri::AppHandle) -> PathBuf {
-    app_handle
-        .path()
-        .app_data_dir()
-        .expect("failed to get app data dir")
-        .join("state.json")
-}
 
 #[cfg(feature = "tauri")]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -34,13 +23,18 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let path = app_state_path(app.app_handle());
+            let app_data_dir = app
+                .app_handle()
+                .path()
+                .app_data_dir()
+                .map_err(|e| e.to_string())?;
+            let path = app_data_dir.join("state.json");
             let initial = load_or_create(&path).map_err(|e| e.to_string())?;
             app.manage(AppStateWrapper {
                 state: Mutex::new(initial),
                 state_path: path,
             });
-            app.manage(pty::PtyManager::new().map_err(|e| e.to_string())?);
+            app.manage(pty::PtyManager::new(app_data_dir).map_err(|e| e.to_string())?);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -55,6 +49,7 @@ pub fn run() {
             commands::write_terminal,
             commands::resize_terminal,
             commands::stop_terminal,
+            commands::is_terminal_running,
             commands::refresh_window,
         ])
         .run(tauri::generate_context!())
