@@ -13,7 +13,7 @@
   <img src="docs/images/app-screenshot.png" alt="Kimi CLI Project Manager 截图" />
 </p>
 
-[English](README.md) | [中文](README.zh.md)
+[English](README.md) | [中文](README.zh.md) | [官网](https://zoroiscrying.github.io/KPM-kimi-cli-project-manager/)
 
 一个用于管理 [Kimi Code CLI](https://github.com/moonshotai/kimi-code) 项目的桌面应用。受 OpenAI Codex Desktop 启发，把项目列表、内嵌终端和会话管理整合到一个原生窗口里。
 
@@ -41,7 +41,7 @@
 
 ## 安装
 
-从 [Release 页面](https://github.com/Zoroiscrying/kimi-cli-project-manager/releases) 下载对应平台的安装包：
+从 [Release 页面](https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases) 下载对应平台的安装包：
 
 - Windows：`kimi-cli-project-manager_0.1.0_x64-setup.exe` 或 `.msi`
 
