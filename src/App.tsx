@@ -40,7 +40,7 @@ function App() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [sessionStatuses, setSessionStatuses] = useState<Record<string, SessionStatus>>({});
   const startedTabsRef = useRef<Set<string>>(new Set());
-  const { t, lang, toggleLang } = useI18n();
+  const { t, lang, setLang } = useI18n();
 
   const setTabStatus = (tabId: string, status: SessionStatus) => {
     setSessionStatuses((prev) => ({ ...prev, [tabId]: status }));
@@ -177,14 +177,17 @@ function App() {
             <span className="text-sm font-bold text-white">Kimi CLI PM</span>
           )}
           <div className="flex items-center gap-1">
-            <button
-              onClick={toggleLang}
-              className="rounded-md px-1.5 py-1 text-xs font-semibold text-[#ffffff99] hover:bg-white/5 hover:text-white"
-              aria-label={t('app.langSwitch')}
-              title={t('app.langSwitch')}
-            >
-              {lang === 'zh' ? 'EN' : '中'}
-            </button>
+            {!leftCollapsed && (
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as 'zh' | 'en')}
+                className="cursor-pointer rounded-md border border-white/10 bg-[#1e1e1e] px-1.5 py-1 text-xs text-[#ffffff99] outline-none hover:bg-white/5"
+                aria-label="Language"
+              >
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+              </select>
+            )}
             <button
               onClick={() => setLeftCollapsed((v) => !v)}
               className="rounded-md p-1.5 text-[#ffffff99] hover:bg-white/5 hover:text-white"

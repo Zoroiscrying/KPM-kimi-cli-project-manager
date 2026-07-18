@@ -32,6 +32,13 @@ jobs:
           CARGO_INCREMENTAL: '0'
         run: npm run tauri:build
 
+      - name: Rename MSI (drop culture suffix)
+        run: |
+          Get-ChildItem src-tauri/target/release/bundle/msi/*_en-US.msi | ForEach-Object {
+            $newName = $_.Name -replace '_en-US(?=\.msi$)', ''
+            Rename-Item $_.FullName $newName
+          }
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
