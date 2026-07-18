@@ -38,8 +38,8 @@ export function ProjectList({
             title={project.name}
             className={`relative flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition-colors ${
               selectedId === project.id
-                ? 'bg-gradient-to-br from-[#7c3aed] to-[#4f46e5] text-white'
-                : 'bg-white/5 text-[#9c8fb8] hover:bg-white/10 hover:text-white'
+                ? 'bg-gradient-to-br from-[#a16bff] to-[#8a5cf6] text-white'
+                : 'bg-white/5 text-[#ffffff8f] hover:bg-white/10 hover:text-white'
             }`}
           >
             {project.name.slice(0, 2).toUpperCase()}
@@ -59,7 +59,7 @@ export function ProjectList({
       </div>
       <div className="flex-1 overflow-auto">
         {filtered.length === 0 ? (
-          <div className="py-8 text-center text-sm text-[#7d7196]">
+          <div className="py-8 text-center text-sm text-[#ffffff6b]">
             {projects.length === 0 ? 'No projects yet.' : 'No projects match your search.'}
           </div>
         ) : (
@@ -77,9 +77,9 @@ export function ProjectList({
                   onSelect(project.id);
                 }
               }}
-              className={`group relative mb-2 flex cursor-pointer items-start justify-between rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#7c3aed] ${
+              className={`group relative mb-2 flex cursor-pointer items-start justify-between rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#a16bff] ${
                 selectedId === project.id
-                  ? 'bg-gradient-to-r from-[#7c3aed]/20 to-[#4f46e5]/10 ring-1 ring-[#7c3aed]/50'
+                  ? 'bg-gradient-to-r from-[#a16bff]/20 to-[#8a5cf6]/10 ring-1 ring-[#a16bff]/50'
                   : 'hover:bg-white/5'
               }`}
             >
@@ -87,15 +87,15 @@ export function ProjectList({
                 <StatusDot status={getStatus(project.id)} size="md" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-medium text-[#e8e2f0]">{project.name}</div>
-                <div className="truncate text-xs text-[#7d7196]">{project.path}</div>
+                <div className="font-medium text-[#ffffffd6]">{project.name}</div>
+                <div className="truncate text-xs text-[#ffffff6b]">{project.path}</div>
               </div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(project.id);
                 }}
-                className="ml-2 shrink-0 rounded p-1 text-[#7d7196] hover:bg-white/10 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+                className="ml-2 shrink-0 rounded p-1 text-[#ffffff6b] hover:bg-white/10 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-[#a16bff]"
                 aria-label={`Delete ${project.name}`}
               >
                 ×

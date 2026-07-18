@@ -4,17 +4,12 @@
 
 @layer base {
   body {
-    @apply bg-[#0a0811] text-[#e8e2f0];
-    background-image:
-      radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.2) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(79, 70, 229, 0.16) 0px, transparent 45%),
-      linear-gradient(180deg, #0a0811 0%, #0d0a16 100%);
-    background-attachment: fixed;
+    @apply bg-[#181817] text-[#ffffffd6];
   }
 }
 
 ::selection {
-  background: rgba(124, 58, 237, 0.4);
+  background: rgba(161, 107, 255, 0.4);
 }
 
 /* Slim, theme-matching scrollbars (WebView2/Chromium). */
@@ -35,7 +30,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(196, 181, 253, 0.4);
+  background: rgba(201, 170, 255, 0.4);
   background-clip: padding-box;
 }
 

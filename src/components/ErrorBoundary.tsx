@@ -27,19 +27,19 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#0a0811] px-6 text-center text-[#e8e2f0]">
+        <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#181817] px-6 text-center text-[#ffffffd6]">
           <h1 className="text-xl font-semibold text-[#f87171]">界面渲染出错</h1>
-          <p className="max-w-md text-sm text-[#a89bc4]">
+          <p className="max-w-md text-sm text-[#ffffff8f]">
             应用遇到了意外错误。请尝试点击右上角关闭后重新启动，或到右侧面板使用“刷新窗口渲染”。
           </p>
           {this.state.error && (
-            <pre className="max-h-48 max-w-lg overflow-auto rounded-xl border border-white/10 bg-[#151222] p-4 text-left text-xs text-[#7d7196]">
+            <pre className="max-h-48 max-w-lg overflow-auto rounded-xl border border-white/10 bg-[#292929] p-4 text-left text-xs text-[#ffffff6b]">
               {this.state.error.toString()}
             </pre>
           )}
           <button
             onClick={() => window.location.reload()}
-            className="rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] px-5 py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/20"
+            className="rounded-xl bg-gradient-to-r from-[#a16bff] to-[#8a5cf6] px-5 py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/20"
           >
             重新加载
           </button>

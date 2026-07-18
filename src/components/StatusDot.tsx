@@ -20,7 +20,7 @@ export function StatusDot({ status, size = 'sm' }: StatusDotProps) {
   if (status === 'completed') {
     return (
       <span
-        className={`inline-flex ${sizeClasses} rounded-full bg-blue-400`}
+        className={`inline-flex ${sizeClasses} rounded-full bg-[#1a88ff]`}
         title="已完成"
       />
     );
