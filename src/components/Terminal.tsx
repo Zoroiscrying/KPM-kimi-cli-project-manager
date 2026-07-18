@@ -83,19 +83,20 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const userScrolledUpRef = useRef(false);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Re-evaluate the visible screen shortly after output arrives: Kimi shows
-    // its idle input box (bare ">" prompt) when done, and a spinner/working UI
-    // while generating. We do NOT wait for "quiet", because the TUI may repaint
-    // its status bar periodically even when idle.
+    // Set "running" synchronously on output (spinner frames arrive faster than
+    // any debounce window, so a debounced decision would never fire), and use
+    // a trailing timer only to flip to "completed" once output pauses and the
+    // screen shows Kimi's idle input box without a spinner.
     const scheduleStatusCheck = () => {
+      onSessionStatusChange?.('running');
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       idleTimerRef.current = setTimeout(() => {
         idleTimerRef.current = null;
         if (!terminalRef.current || !hasInputRef.current) return;
-        onSessionStatusChange?.(
-          bufferShowsIdlePrompt(terminalRef.current) ? 'completed' : 'running'
-        );
-      }, 120);
+        if (bufferShowsIdlePrompt(terminalRef.current)) {
+          onSessionStatusChange?.('completed');
+        }
+      }, 300);
     };
 
     useImperativeHandle(ref, () => ({
