@@ -70,7 +70,7 @@ export function RightPanel({
                     status === 'running'
                       ? 'border-[#1783ff]/25 bg-[#1783ff]/10 text-[#5cadff]'
                       : status === 'completed'
-                      ? 'border-[#1783ff]/20 bg-[#1783ff]/10 text-[#1783ff]'
+                      ? 'border-white/20 bg-white/10 text-white'
                       : 'border-white/10 bg-white/5 text-[#ffffff99]'
                   }`}
                 >
@@ -79,7 +79,7 @@ export function RightPanel({
                       status === 'running'
                         ? 'animate-pulse bg-[#1783ff]'
                         : status === 'completed'
-                        ? 'bg-[#1783ff]'
+                        ? 'bg-white ring-1 ring-white/40'
                         : 'bg-white/30'
                     }`}
                   />

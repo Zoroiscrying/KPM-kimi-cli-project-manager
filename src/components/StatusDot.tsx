@@ -23,7 +23,7 @@ export function StatusDot({ status, size = 'sm' }: StatusDotProps) {
   if (status === 'completed') {
     return (
       <span
-        className={`inline-flex ${sizeClasses} rounded-full bg-[#1783ff]`}
+        className={`inline-flex ${sizeClasses} rounded-full bg-white ring-2 ring-white/40`}
         title={t('status.completed')}
       />
     );
