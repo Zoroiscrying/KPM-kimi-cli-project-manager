@@ -82,20 +82,28 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const hasInputRef = useRef(false);
     const userScrolledUpRef = useRef(false);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastEvalRef = useRef(0);
 
-    // Set "running" synchronously on output (spinner frames arrive faster than
-    // any debounce window, so a debounced decision would never fire), and use
-    // a trailing timer only to flip to "completed" once output pauses and the
-    // screen shows Kimi's idle input box without a spinner.
+    // Completion detection, three layered signals:
+    // 1. term.onBell — Kimi emits a terminal bell (BEL) / OSC 9 on turn-complete.
+    // 2. Trailing timer — after output pauses, check the parsed screen for the
+    //    idle input box (bare ">" prompt) without a spinner.
+    // 3. Throttled per-chunk check — same screen check, covers the case where
+    //    the status bar keeps repainting so output never fully pauses.
+    const evaluateStatus = () => {
+      const term = terminalRef.current;
+      if (!term || !hasInputRef.current) return;
+      if (bufferShowsIdlePrompt(term)) {
+        onSessionStatusChange?.('completed');
+      }
+    };
+
     const scheduleStatusCheck = () => {
       onSessionStatusChange?.('running');
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       idleTimerRef.current = setTimeout(() => {
         idleTimerRef.current = null;
-        if (!terminalRef.current || !hasInputRef.current) return;
-        if (bufferShowsIdlePrompt(terminalRef.current)) {
-          onSessionStatusChange?.('completed');
-        }
+        evaluateStatus();
       }, 300);
     };
 
@@ -178,6 +186,13 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         userScrolledUpRef.current = !atBottom;
       });
 
+      // Kimi Code emits a terminal bell / OSC 9 notification on turn-complete.
+      const onBellDisposable = term.onBell(() => {
+        if (hasInputRef.current) {
+          onSessionStatusChange?.('completed');
+        }
+      });
+
       let mounted = true;
       let unlisten: UnlistenFn | null = null;
 
@@ -201,6 +216,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               }
               if (hasInputRef.current) {
                 scheduleStatusCheck();
+                const now = Date.now();
+                if (now - lastEvalRef.current > 500) {
+                  lastEvalRef.current = now;
+                  // Let xterm parse the chunk before reading the buffer.
+                  setTimeout(evaluateStatus, 0);
+                }
               }
             }
           }
@@ -226,6 +247,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         }
         onDataDisposable.dispose();
         onScrollDisposable.dispose();
+        onBellDisposable.dispose();
         unlisten?.();
         invoke('stop_terminal', { sessionId }).catch(() => {});
         term.dispose();

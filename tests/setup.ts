@@ -23,6 +23,9 @@ vi.mock('@xterm/xterm', () => ({
     onScroll(_handler: () => void) {
       return { dispose: () => {} };
     }
+    onBell(_handler: () => void) {
+      return { dispose: () => {} };
+    }
     get rows() {
       return 24;
     }
