@@ -78,6 +78,21 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
     const userScrolledUpRef = useRef(false);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Re-evaluate the visible screen shortly after output arrives: Kimi shows
+    // its idle input box (bare ">" prompt) when done, and a spinner/working UI
+    // while generating. We do NOT wait for "quiet", because the TUI may repaint
+    // its status bar periodically even when idle.
+    const scheduleStatusCheck = () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(() => {
+        idleTimerRef.current = null;
+        if (!terminalRef.current || !hasInputRef.current) return;
+        onSessionStatusChange?.(
+          bufferShowsIdlePrompt(terminalRef.current) ? 'completed' : 'running'
+        );
+      }, 120);
+    };
+
     useImperativeHandle(ref, () => ({
       sendCommand: (command: string) => {
         const term = terminalRef.current;
@@ -126,7 +141,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
 
       const onDataDisposable = term.onData((data) => {
         hasInputRef.current = true;
-        onSessionStatusChange?.('running');
+        scheduleStatusCheck();
         invoke('write_terminal', { sessionId, data }).catch((err) => {
           term.writeln(`\r\n[write error: ${err}]`);
         });
@@ -162,18 +177,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
                 });
               }
               if (hasInputRef.current) {
-                onSessionStatusChange?.('running');
-                // Confirm completion from the parsed screen: once output goes
-                // quiet, check whether Kimi is showing its idle prompt box.
-                if (idleTimerRef.current) {
-                  clearTimeout(idleTimerRef.current);
-                }
-                idleTimerRef.current = setTimeout(() => {
-                  idleTimerRef.current = null;
-                  if (terminalRef.current && bufferShowsIdlePrompt(terminalRef.current)) {
-                    onSessionStatusChange?.('completed');
-                  }
-                }, 700);
+                scheduleStatusCheck();
               }
             }
           }
