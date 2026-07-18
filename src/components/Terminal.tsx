@@ -28,10 +28,12 @@ interface TerminalProps {
 }
 
 // Kimi CLI is a full-screen TUI: when it goes idle it repaints an input box
-// whose prompt line is a bare ">" (optionally with a cursor block), while the
-// bottom status bar stays below it. Instead of pattern-matching the raw PTY
-// byte stream (cursor-positioning sequences make "lines" unreliable there),
-// we read the already-parsed screen content from the xterm buffer.
+// whose prompt line is a bare ">" framed by box borders. The box also stays
+// visible while generating, so a bare prompt alone is not enough -- we also
+// require that no braille spinner is visible in the bottom area.
+const IDLE_PROMPT_RE = /^\s*[│┃|]?\s*>[\s│┃|█]*$/;
+const SPINNER_RE = /[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/;
+
 function bufferShowsIdlePrompt(term: XTerm): boolean {
   const buf = term.buffer.active;
   const lines: string[] = [];
@@ -42,7 +44,9 @@ function bufferShowsIdlePrompt(term: XTerm): boolean {
     const text = line.translateToString(true).trimEnd();
     if (text.length > 0) lines.push(text);
   }
-  return lines.some((line) => /^\s*[│┃|]?\s*>[\s│┃|█]*$/.test(line));
+  const hasPrompt = lines.some((line) => IDLE_PROMPT_RE.test(line));
+  const hasSpinner = lines.some((line) => SPINNER_RE.test(line));
+  return hasPrompt && !hasSpinner;
 }
 
 // Kimi-inspired purple/blue terminal palette
