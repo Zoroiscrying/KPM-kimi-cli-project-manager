@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KPM — Kimi CLI Project Manager</title>
+  <meta name="description" content="Kimi Code CLI 项目的桌面工作台：多标签内嵌终端、会话自动恢复、项目一键管理。" />
+  <link rel="icon" href="images/icon.png" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --panel: #161616;
+      --card: #1e1e1e;
+      --hover: #262626;
+      --text: #ffffff;
+      --text-2: rgba(255, 255, 255, 0.6);
+      --text-3: rgba(255, 255, 255, 0.4);
+      --blue: #1783ff;
+      --blue-2: #258eff;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(13, 13, 13, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex; align-items: center; gap: 10px;
+      height: 60px;
+    }
+    nav img { width: 28px; height: 28px; border-radius: 7px; }
+    nav .brand { font-weight: 700; letter-spacing: 0.5px; }
+    nav .spacer { flex: 1; }
+    nav a.nav-link {
+      color: var(--text-2); font-size: 14px; padding: 6px 10px; border-radius: 8px;
+    }
+    nav a.nav-link:hover { color: var(--text); background: var(--hover); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 12px;
+      font-size: 15px; font-weight: 600;
+      border: 1px solid transparent;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(120deg, var(--blue), var(--blue-2));
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(23, 131, 255, 0.25);
+    }
+    .btn-ghost {
+      background: var(--card); color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { background: var(--hover); }
+
+    /* Hero */
+    header.hero { padding: 96px 0 64px; text-align: center; }
+    header.hero img.logo {
+      width: 116px; height: 116px; border-radius: 28px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    }
+    header.hero h1 {
+      margin-top: 28px; font-size: 56px; letter-spacing: 2px; line-height: 1.1;
+    }
+    header.hero h1 span { color: var(--blue); }
+    header.hero .subtitle {
+      margin-top: 6px; font-size: 18px; color: var(--text-2); font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    header.hero .tagline {
+      margin: 20px auto 0; max-width: 560px;
+      font-size: 17px; color: var(--text-2);
+    }
+    header.hero .actions {
+      margin-top: 36px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    }
+
+    /* Screenshot */
+    section.shot { padding: 24px 0 80px; }
+    section.shot .frame {
+      border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+      background: var(--panel);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+    }
+    section.shot img { display: block; width: 100%; height: auto; }
+
+    /* Features */
+    section.features { padding: 0 0 88px; }
+    section.features h2 { font-size: 28px; text-align: center; margin-bottom: 40px; }
+    .grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px;
+    }
+    .card .icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(23, 131, 255, 0.14);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--blue-2); font-size: 18px; margin-bottom: 14px;
+    }
+    .card h3 { font-size: 16px; margin-bottom: 6px; }
+    .card p { font-size: 14px; color: var(--text-2); }
+
+    /* Support strip */
+    section.support {
+      border-top: 1px solid var(--border);
+      padding: 56px 0; text-align: center;
+    }
+    section.support h2 { font-size: 24px; margin-bottom: 10px; }
+    section.support p { color: var(--text-2); margin-bottom: 24px; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0; text-align: center;
+      color: var(--text-3); font-size: 13px;
+    }
+    footer a { color: var(--text-2); }
+    footer a:hover { color: var(--blue-2); }
+
+    @media (max-width: 640px) {
+      header.hero h1 { font-size: 40px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <img src="images/icon.png" alt="KPM icon" />
+      <span class="brand">KPM</span>
+      <span class="spacer"></span>
+      <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">GitHub</a>
+      <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases">下载</a>
+      <a class="nav-link" href="https://ko-fi.com/zoroiscrying">Support</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <img class="logo" src="images/icon.png" alt="KPM logo" />
+      <h1>KPM<span>.</span></h1>
+      <p class="subtitle">Kimi CLI Project Manager</p>
+      <p class="tagline">
+        把每一个 Kimi Code CLI 项目收进同一个桌面工作台：
+        多标签内嵌终端、会话自动恢复，切换项目不再丢上下文。
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases">
+          下载 Windows 版
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">
+          GitHub 仓库
+        </a>
+        <a class="btn btn-ghost" href="https://ko-fi.com/zoroiscrying">
+          ☕ Support on Ko-fi
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="shot">
+    <div class="container">
+      <div class="frame">
+        <img src="images/app-screenshot.png" alt="KPM 应用截图" />
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="container">
+      <h2>为 Kimi Code CLI 重度用户而生</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="icon">▣</div>
+          <h3>多标签终端</h3>
+          <p>每个项目独占一个内嵌终端标签，切换不中断，多个 Kimi 会话并行推进。</p>
+        </div>
+        <div class="card">
+          <div class="icon">↻</div>
+          <h3>会话自动恢复</h3>
+          <p>打开项目自动定位最近一次 Kimi 会话并恢复现场，接着上次的思路继续。</p>
+        </div>
+        <div class="card">
+          <div class="icon">⇣</div>
+          <h3>一键导入历史</h3>
+          <p>读取 Kimi CLI 的本地历史，把用过的项目批量导入，不用手动逐个添加。</p>
+        </div>
+        <div class="card">
+          <div class="icon">⚙</div>
+          <h3>环境信息面板</h3>
+          <p>运行状态、项目详情、最近会话一目了然，打开文件夹、复制路径一步到位。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="support">
+    <div class="container">
+      <h2>觉得有用？请我喝杯咖啡</h2>
+      <p>KPM 是开源免费的个人项目。你的支持是我持续打磨它的动力。</p>
+      <a class="btn btn-primary" href="https://ko-fi.com/zoroiscrying">☕ 在 Ko-fi 上支持</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>
+        KPM — Kimi CLI Project Manager · MIT License ·
+        <a href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">GitHub</a> ·
+        <a href="https://ko-fi.com/zoroiscrying">Ko-fi</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

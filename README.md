@@ -13,7 +13,7 @@
   <img src="docs/images/app-screenshot.png" alt="Kimi CLI Project Manager screenshot" />
 </p>
 
-[English](README.md) | [中文](README.zh.md)
+[English](README.md) | [中文](README.zh.md) | [Website](https://zoroiscrying.github.io/KPM-kimi-cli-project-manager/)
 
 A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-code) projects. Inspired by OpenAI Codex Desktop, it brings project listing, embedded terminals, and session management into a single native window.
 
@@ -41,7 +41,7 @@ A desktop app for managing [Kimi Code CLI](https://github.com/moonshotai/kimi-co
 
 ## Installation
 
-Download the installer for your platform from the [Releases](https://github.com/Zoroiscrying/kimi-cli-project-manager/releases) page:
+Download the installer for your platform from the [Releases](https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases) page:
 
 - Windows: `kimi-cli-project-manager_0.1.0_x64-setup.exe` or `.msi`
 

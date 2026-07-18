@@ -1,6 +1,7 @@
 /.worktrees/
+/.superpowers/
+/docs/superpowers/
 node_modules/
 dist/
 *.log
 screenshot.png
-
