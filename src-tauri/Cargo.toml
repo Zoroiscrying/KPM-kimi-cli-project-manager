@@ -1,6 +1,6 @@
 [package]
 name = "kimi-cli-project-manager"
-version = "0.2.4"
+version = "0.2.5"
 description = "Kimi CLI Project Manager - multi-project manager for Kimi Code CLI"
 authors = ["kimi-cli-project-manager"]
 edition = "2021"
