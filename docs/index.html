@@ -49,6 +49,12 @@
       color: var(--text-2); font-size: 14px; padding: 6px 10px; border-radius: 8px;
     }
     nav a.nav-link:hover { color: var(--text); background: var(--hover); }
+    #lang-toggle {
+      background: var(--card); color: var(--text-2);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; padding: 5px 10px; cursor: pointer;
+    }
+    #lang-toggle:hover { color: var(--text); background: var(--hover); }
 
     /* Buttons */
     .btn {
@@ -83,6 +89,14 @@
     header.hero .subtitle {
       margin-top: 6px; font-size: 18px; color: var(--text-2); font-weight: 600;
       letter-spacing: 0.5px;
+    }
+    header.hero .pain {
+      display: inline-block;
+      margin-top: 22px; padding: 10px 18px;
+      border: 1px solid rgba(23, 131, 255, 0.3);
+      background: rgba(23, 131, 255, 0.08);
+      border-radius: 12px;
+      font-size: 15px; color: var(--blue-2);
     }
     header.hero .tagline {
       margin: 20px auto 0; max-width: 560px;
@@ -150,8 +164,9 @@
       <span class="brand">KPM</span>
       <span class="spacer"></span>
       <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">GitHub</a>
-      <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases">下载</a>
+      <a class="nav-link" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases" data-i18n="nav.download">下载</a>
       <a class="nav-link" href="https://ko-fi.com/zoroiscrying">Support</a>
+      <button id="lang-toggle" type="button" aria-label="Switch language">EN</button>
     </div>
   </nav>
 
@@ -160,18 +175,19 @@
       <img class="logo" src="images/icon.png" alt="KPM logo" />
       <h1>KPM<span>.</span></h1>
       <p class="subtitle">Kimi CLI Project Manager</p>
-      <p class="tagline">
+      <p class="pain" data-i18n="hero.pain">Kimi Code 目前还没有多项目管理客户端 —— KPM 就是来补这个缺口的。</p>
+      <p class="tagline" data-i18n="hero.tagline">
         把每一个 Kimi Code CLI 项目收进同一个桌面工作台：
         多标签内嵌终端、会话自动恢复，切换项目不再丢上下文。
       </p>
       <div class="actions">
-        <a class="btn btn-primary" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases">
+        <a class="btn btn-primary" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager/releases" data-i18n="hero.download">
           下载 Windows 版
         </a>
-        <a class="btn btn-ghost" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager">
+        <a class="btn btn-ghost" href="https://github.com/Zoroiscrying/KPM-kimi-cli-project-manager" data-i18n="hero.github">
           GitHub 仓库
         </a>
-        <a class="btn btn-ghost" href="https://ko-fi.com/zoroiscrying">
+        <a class="btn btn-ghost" href="https://ko-fi.com/zoroiscrying" data-i18n="hero.kofi">
           ☕ Support on Ko-fi
         </a>
       </div>
@@ -181,34 +197,34 @@
   <section class="shot">
     <div class="container">
       <div class="frame">
-        <img src="images/app-screenshot.png" alt="KPM 应用截图" />
+        <img src="images/app-screenshot.png" alt="KPM app screenshot" />
       </div>
     </div>
   </section>
 
   <section class="features">
     <div class="container">
-      <h2>为 Kimi Code CLI 重度用户而生</h2>
+      <h2 data-i18n="features.title">为 Kimi Code CLI 重度用户而生</h2>
       <div class="grid">
         <div class="card">
           <div class="icon">▣</div>
-          <h3>多标签终端</h3>
-          <p>每个项目独占一个内嵌终端标签，切换不中断，多个 Kimi 会话并行推进。</p>
+          <h3 data-i18n="f1.title">多标签终端</h3>
+          <p data-i18n="f1.desc">每个项目独占一个内嵌终端标签，切换不中断，多个 Kimi 会话并行推进。</p>
         </div>
         <div class="card">
           <div class="icon">↻</div>
-          <h3>会话自动恢复</h3>
-          <p>打开项目自动定位最近一次 Kimi 会话并恢复现场，接着上次的思路继续。</p>
+          <h3 data-i18n="f2.title">会话自动恢复</h3>
+          <p data-i18n="f2.desc">打开项目自动定位最近一次 Kimi 会话并恢复现场，接着上次的思路继续。</p>
         </div>
         <div class="card">
           <div class="icon">⇣</div>
-          <h3>一键导入历史</h3>
-          <p>读取 Kimi CLI 的本地历史，把用过的项目批量导入，不用手动逐个添加。</p>
+          <h3 data-i18n="f3.title">一键导入历史</h3>
+          <p data-i18n="f3.desc">读取 Kimi CLI 的本地历史，把用过的项目批量导入，不用手动逐个添加。</p>
         </div>
         <div class="card">
           <div class="icon">⚙</div>
-          <h3>环境信息面板</h3>
-          <p>运行状态、项目详情、最近会话一目了然，打开文件夹、复制路径一步到位。</p>
+          <h3 data-i18n="f4.title">环境信息面板</h3>
+          <p data-i18n="f4.desc">运行状态、项目详情、最近会话一目了然，打开文件夹、复制路径一步到位。</p>
         </div>
       </div>
     </div>
@@ -216,9 +232,9 @@
 
   <section class="support">
     <div class="container">
-      <h2>觉得有用？请我喝杯咖啡</h2>
-      <p>KPM 是开源免费的个人项目。你的支持是我持续打磨它的动力。</p>
-      <a class="btn btn-primary" href="https://ko-fi.com/zoroiscrying">☕ 在 Ko-fi 上支持</a>
+      <h2 data-i18n="support.title">觉得有用？请我喝杯咖啡</h2>
+      <p data-i18n="support.desc">KPM 是开源免费的个人项目。你的支持是我持续打磨它的动力。</p>
+      <a class="btn btn-primary" href="https://ko-fi.com/zoroiscrying" data-i18n="support.btn">☕ 在 Ko-fi 上支持</a>
     </div>
   </section>
 
@@ -231,5 +247,76 @@
       </p>
     </div>
   </footer>
+
+  <script>
+    const translations = {
+      zh: {
+        "nav.download": "下载",
+        "hero.pain": "Kimi Code 目前还没有多项目管理客户端 —— KPM 就是来补这个缺口的。",
+        "hero.tagline": "把每一个 Kimi Code CLI 项目收进同一个桌面工作台：多标签内嵌终端、会话自动恢复，切换项目不再丢上下文。",
+        "hero.download": "下载 Windows 版",
+        "hero.github": "GitHub 仓库",
+        "hero.kofi": "☕ 在 Ko-fi 上支持",
+        "features.title": "为 Kimi Code CLI 重度用户而生",
+        "f1.title": "多标签终端",
+        "f1.desc": "每个项目独占一个内嵌终端标签，切换不中断，多个 Kimi 会话并行推进。",
+        "f2.title": "会话自动恢复",
+        "f2.desc": "打开项目自动定位最近一次 Kimi 会话并恢复现场，接着上次的思路继续。",
+        "f3.title": "一键导入历史",
+        "f3.desc": "读取 Kimi CLI 的本地历史，把用过的项目批量导入，不用手动逐个添加。",
+        "f4.title": "环境信息面板",
+        "f4.desc": "运行状态、项目详情、最近会话一目了然，打开文件夹、复制路径一步到位。",
+        "support.title": "觉得有用？请我喝杯咖啡",
+        "support.desc": "KPM 是开源免费的个人项目。你的支持是我持续打磨它的动力。",
+        "support.btn": "☕ 在 Ko-fi 上支持"
+      },
+      en: {
+        "nav.download": "Download",
+        "hero.pain": "Kimi Code currently doesn't have a multi-project management client — KPM fills that gap.",
+        "hero.tagline": "Bring every Kimi Code CLI project into one desktop workspace: multi-tab embedded terminals and automatic session restore, so switching projects never loses your context.",
+        "hero.download": "Download for Windows",
+        "hero.github": "View on GitHub",
+        "hero.kofi": "☕ Support on Ko-fi",
+        "features.title": "Built for heavy Kimi Code CLI users",
+        "f1.title": "Multi-tab terminals",
+        "f1.desc": "Every project gets its own embedded terminal tab. Switch freely without interrupting any running Kimi session.",
+        "f2.title": "Session restore",
+        "f2.desc": "Opening a project automatically finds and resumes its most recent Kimi session, right where you left off.",
+        "f3.title": "One-click import",
+        "f3.desc": "Reads your local Kimi CLI history and batch-imports the projects you've used — no manual setup.",
+        "f4.title": "Environment panel",
+        "f4.desc": "Run status, project details and recent sessions at a glance. Open folder or copy the path in one click.",
+        "support.title": "Find it useful? Buy me a coffee",
+        "support.desc": "KPM is a free, open-source personal project. Your support keeps it going.",
+        "support.btn": "☕ Support on Ko-fi"
+      }
+    };
+
+    function detectLang() {
+      const saved = localStorage.getItem("kpm-lang");
+      if (saved === "zh" || saved === "en") return saved;
+      const nav = (navigator.language || "en").toLowerCase();
+      return nav.startsWith("zh") ? "zh" : "en";
+    }
+
+    function applyLang(lang) {
+      const dict = translations[lang];
+      document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.getElementById("lang-toggle").textContent = lang === "zh" ? "EN" : "中文";
+      localStorage.setItem("kpm-lang", lang);
+    }
+
+    let current = detectLang();
+    applyLang(current);
+
+    document.getElementById("lang-toggle").addEventListener("click", () => {
+      current = current === "zh" ? "en" : "zh";
+      applyLang(current);
+    });
+  </script>
 </body>
 </html>
