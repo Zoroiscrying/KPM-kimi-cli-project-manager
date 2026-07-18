@@ -11,6 +11,7 @@ interface RightPanelProps {
   onEdit?: () => void;
   onCollapse?: () => void;
   onRefresh?: () => void;
+  onDumpDebug?: () => void;
 }
 
 export function RightPanel({
@@ -21,6 +22,7 @@ export function RightPanel({
   onEdit,
   onCollapse,
   onRefresh,
+  onDumpDebug,
 }: RightPanelProps) {
   const { t, locale } = useI18n();
   const projectSessions = project
@@ -183,6 +185,12 @@ export function RightPanel({
                   className="w-full rounded-xl border border-white/5 bg-[#1e1e1e] px-3 py-2 text-left text-xs text-[#ffffff99] hover:bg-[#262626]"
                 >
                   {t('panel.refresh')}
+                </button>
+                <button
+                  onClick={onDumpDebug}
+                  className="w-full rounded-xl border border-white/5 bg-[#1e1e1e] px-3 py-2 text-left text-xs text-[#ffffff99] hover:bg-[#262626]"
+                >
+                  {t('panel.dumpDebug')}
                 </button>
               </div>
             </section>

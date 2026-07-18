@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ProjectList } from './components/ProjectList';
-import { Terminal } from './components/Terminal';
+import { Terminal, type TerminalHandle } from './components/Terminal';
 import { RightPanel } from './components/RightPanel';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import { EditProjectDialog } from './components/EditProjectDialog';
@@ -39,7 +39,9 @@ function App() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [sessionStatuses, setSessionStatuses] = useState<Record<string, SessionStatus>>({});
+  const [notice, setNotice] = useState<string | null>(null);
   const startedTabsRef = useRef<Set<string>>(new Set());
+  const terminalRefs = useRef<Map<string, TerminalHandle>>(new Map());
   const { t, lang, setLang } = useI18n();
 
   const setTabStatus = (tabId: string, status: SessionStatus) => {
@@ -162,6 +164,16 @@ function App() {
     } catch {
       // ignore
     }
+  };
+
+  const handleDumpDebug = () => {
+    if (!activeTabId) return;
+    const handle = terminalRefs.current.get(activeTabId);
+    if (!handle) return;
+    navigator.clipboard.writeText(handle.dumpScreen()).then(() => {
+      setNotice(t('app.debugCopied'));
+      setTimeout(() => setNotice(null), 3000);
+    });
   };
 
   return (
@@ -321,6 +333,13 @@ function App() {
                     }`}
                   >
                     <Terminal
+                      ref={(el) => {
+                        if (el) {
+                          terminalRefs.current.set(tab.id, el);
+                        } else {
+                          terminalRefs.current.delete(tab.id);
+                        }
+                      }}
                       project={tab.project}
                       sessionId={sessionIdForTab(tab)}
                       isActive={tab.id === activeTabId}
@@ -371,6 +390,7 @@ function App() {
               onEdit={() => setIsEditOpen(true)}
               onCollapse={() => setRightCollapsed(true)}
               onRefresh={handleRefresh}
+              onDumpDebug={handleDumpDebug}
             />
           </div>
         </div>
@@ -388,6 +408,14 @@ function App() {
         onSave={updateProject}
       />
       {error && <Toast message={error} onClose={clearError} />}
+      {notice && (
+        <div
+          className="fixed bottom-4 right-4 z-50 rounded-2xl border border-[#1783ff]/30 bg-[#161616] px-5 py-3 text-sm text-[#5cadff] shadow-xl shadow-black/30"
+          onClick={() => setNotice(null)}
+        >
+          {notice}
+        </div>
+      )}
     </div>
   );
 }

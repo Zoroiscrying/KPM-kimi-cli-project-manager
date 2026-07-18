@@ -16,6 +16,7 @@ import type { SessionStatus } from './StatusDot';
 export interface TerminalHandle {
   sendCommand: (command: string) => void;
   focus: () => void;
+  dumpScreen: () => string;
 }
 
 interface TerminalProps {
@@ -109,6 +110,23 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
       },
       focus: () => {
         terminalRef.current?.focus();
+      },
+      dumpScreen: () => {
+        const term = terminalRef.current;
+        if (!term) return 'no terminal';
+        const buf = term.buffer.active;
+        const lines: string[] = [];
+        const bottom = buf.baseY + term.rows - 1;
+        for (let y = bottom; y >= buf.baseY && lines.length < 14; y--) {
+          const line = buf.getLine(y);
+          if (!line) continue;
+          const text = line.translateToString(true).trimEnd();
+          if (text.length > 0) lines.push(`${y}: ${JSON.stringify(text)}`);
+        }
+        return (
+          `hasInput=${hasInputRef.current} baseY=${buf.baseY} rows=${term.rows} length=${buf.length}\n` +
+          lines.join('\n')
+        );
       },
     }));
 
