@@ -1654,7 +1654,7 @@ dependencies = [
 
 [[package]]
 name = "kimi-cli-project-manager"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "chrono",
  "portable-pty",

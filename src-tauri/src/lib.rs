@@ -34,7 +34,7 @@ pub fn run() {
                 state: Mutex::new(initial),
                 state_path: path,
             });
-            app.manage(pty::PtyManager::new(app_data_dir).map_err(|e| e.to_string())?);
+            app.manage(pty::PtyManager::new().map_err(|e| e.to_string())?);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
